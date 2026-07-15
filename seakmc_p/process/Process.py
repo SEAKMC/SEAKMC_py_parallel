@@ -103,7 +103,7 @@ def run_seakmc(thissett, seakmcdata, object_dict, Eground, thisRestart):
                 if rank_world == 0:
                     target_displacement = thisTrialDisps.apply_displacement()
                     logstr = "\n" + f"---summary of trial strains of {istep} KMC step---"
-                    logstr += f"trial displacements: {np.around(thisTrialDisps.displacements, 6)}"
+                    logstr += "\n" + f"trial displacements: {np.around(thisTrialDisps.displacements, 6)}"
                     logstr += "\n" + f"strains (displacements/Ref_Length):{np.around(thisTrialDisps.strains, 6)}"
                     logstr += "\n" + f"barriers: {np.around(thisTrialDisps.barrs, 6)} one_over_freqs:{np.around(thisTrialDisps.one_over_freqs, 6)}"
                     logstr += "\n" + f"strain rates:{np.around(thisTrialDisps.strainrates, 6)}"
