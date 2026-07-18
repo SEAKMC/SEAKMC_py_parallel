@@ -946,8 +946,48 @@ class SeakmcData(LammpsData, MSONable):
             dCN_list = []
         return defect_list, dCN_list
 
-    def find_df_chains(self, df, rcut, nReal, Recursive=False, Overlapping=True, Order4Recursive=None,
-                       Overlap4OrderRecursive=True):
+    def find_df_chains(self, df, rcut, nReal, Recursive=False, BreadthFirst=False, MaxBreadth=None, Overlapping=True):
+        """
+        Build atom chains from the neighbor graph.
+
+        Parameters
+        ----------
+        Recursive : bool, default=False
+            If False, each chain contains only the starting atom.
+
+        BreadthFirst : bool, default=False
+            If True, perform a breadth-first recursive expansion.
+            This option requires Recursive=True.
+
+        MaxBreadth : int, optional
+            Maximum breadth (neighbor level) included in the chain.
+            A value of n includes atoms that are within n neighbor
+            levels from the starting atom. This parameter is ignored
+            unless BreadthFirst=True.
+
+        Modes
+        -----
+        Recursive=False
+            Each chain contains only the starting atom.
+
+        Recursive=True, BreadthFirst=False
+            The chain contains all atoms connected through neighbor
+            relationships (unlimited recursive expansion).
+
+        Recursive=True, BreadthFirst=True
+            The chain contains atoms whose shortest-path distance
+            from the starting atom is less than or equal to MaxBreadth.
+        """
+        if not Recursive:
+            recursion_mode = "single"
+            max_breadth = 0
+        elif isinstance(MaxBreadth, int):
+            recursion_mode = "breadthfirst"
+            max_breadth = MaxBreadth
+        else:
+            recursion_mode = "full"
+            max_breadth = float("inf")
+
         rcutsq = rcut * rcut
         thisdtype = self.generate_thisdtype(df, OutIndex=True)
         atoms_ghost_array = self.atoms_to_array(df, OutIndex=True)
@@ -960,7 +1000,7 @@ class SeakmcData(LammpsData, MSONable):
         #########################################################################################################
         def update_chain_info(nReal, nr, thiscoords, id_chain, indchain, nchain, arrays, masks, next_id, id_left,
                               array_atoms, orders,
-                              Recursive=False, Overlapping=True, Order4Recursive=None, Overlap4OrderRecursive=True):
+                              Recursive=False, Overlapping=True):
             def update_ichain_info(nr, ichain, thiscenter, indchain, inds, id_chain, arrays):
                 icen = np.array([arrays[ichain]["xsn"], arrays[ichain]["ysn"], arrays[ichain]["zsn"]])
                 jcen = np.array([thiscenter["xsn"], thiscenter["ysn"], thiscenter["zsn"]])
@@ -974,14 +1014,14 @@ class SeakmcData(LammpsData, MSONable):
                         else:
                             cshift[idim] = 1.0
                 icen = (icen * indchain[ichain].shape[0] + (jcen + cshift) * inds.shape[0]) / (
-                            indchain[ichain].shape[0] + inds.shape[0])
+                        indchain[ichain].shape[0] + inds.shape[0])
                 arrays[ichain]["xsn"] = icen[0]
                 arrays[ichain]["ysn"] = icen[1]
                 arrays[ichain]["zsn"] = icen[2]
                 idCN = arrays[ichain]["dCN"]
                 jdCN = thiscenter["dCN"]
                 idCN = (idCN * indchain[ichain].shape[0] + jdCN * inds.shape[0]) / (
-                            indchain[ichain].shape[0] + inds.shape[0])
+                        indchain[ichain].shape[0] + inds.shape[0])
                 arrays[ichain]["dCN"] = idCN
                 id_chain[inds] = ichain
                 indchain[ichain] = np.hstack((indchain[ichain], inds))
@@ -1002,6 +1042,7 @@ class SeakmcData(LammpsData, MSONable):
                 thisij = None
                 return next_id, id_left, masks, orders
 
+            ###############################################
             ichain = id_chain[nr]
             iorder = orders[nr]
             thisatoms = self.get_cell_atoms(nr, thiscoords, idc_reverse, grouped_atoms, atomdtype, Self_Excluded=False,
@@ -1012,19 +1053,12 @@ class SeakmcData(LammpsData, MSONable):
             inds = np.compress(thisxyznsq < rcutsq, inds, axis=0)
             thisatoms = np.compress(thisxyznsq < rcutsq, thisatoms, axis=0)
 
-            DoRecursive = True
-            if Recursive and isinstance(Order4Recursive, int):
-                if iorder < Order4Recursive:
-                    DoRecursive = True
-                else:
-                    DoRecursive = False
-                thisorders = orders[inds]
-                if Overlap4OrderRecursive:
-                    inds = np.compress(thisorders <= Order4Recursive, inds, axis=0)
-                    thisatoms = np.compress(thisorders <= Order4Recursive, thisatoms, axis=0)
-                else:
-                    inds = np.compress(thisorders < Order4Recursive, inds, axis=0)
-                    thisatoms = np.compress(thisorders < Order4Recursive, thisatoms, axis=0)
+            intersect_only = (recursion_mode != "breadthfirst")
+            DoRecursive = iorder <= max_breadth
+            if recursion_mode == "breadthfirst":
+                valid = orders[inds] <= max_breadth
+                inds = inds[valid]
+                thisatoms = thisatoms[valid]
 
             if masks[nr]:
                 thismask = np.zeros(inds.shape[0], dtype=bool)
@@ -1033,14 +1067,13 @@ class SeakmcData(LammpsData, MSONable):
                 if inds.shape[0] > 0:
                     if indsF.shape[0] > 0 and Recursive:
                         tmporder = orders[indsF[0]]
-                        MakeNew = False
-                        if tmporder < Order4Recursive:
+                        MakeNew = True
+                        if recursion_mode == "breadthfirst" and tmporder < max_breadth:
                             MakeNew = False
-                        else:
-                            MakeNew = True
+
                         if MakeNew:
-                            #print("MASK is true and indsF>0 and make a NEW chain")
-                            if not Overlap4OrderRecursive:
+                            # print("MASK is true and indsF>0 and make a NEW chain")
+                            if recursion_mode != "breadthfirst":
                                 inds = inds[thismask]
                                 thisatoms = thisatoms[thismask]
                             if not Overlapping:
@@ -1056,16 +1089,11 @@ class SeakmcData(LammpsData, MSONable):
                             indchain.append(inds)
 
                             masks = np.ones(nReal, dtype=bool)
-                            #orders=np.zeros(nReal, dtype=int)
-                            if Overlap4OrderRecursive:
-                                next_id, id_left, masks, orders = update_id_left(inds, next_id, id_left, masks, orders,
-                                                                                 0, nr, IntersectOnly=False)
-                            else:
-                                next_id, id_left, masks, orders = update_id_left(inds, next_id, id_left, masks, orders,
-                                                                                 0, nr, IntersectOnly=True)
+                            next_id, id_left, masks, orders = update_id_left(inds, next_id, id_left, masks, orders,
+                                                                             iorder, nr, IntersectOnly=intersect_only)
                             nchain += 1
                         else:
-                            #print("MASK is true and indsF>0 and NOT make a new chain")
+                            # print("MASK is true and indsF>0 and NOT make a new chain")
                             ichain = id_chain[indsF[0]]
                             iorder = orders[indsF[0]]
                             inds = inds[thismask]
@@ -1082,7 +1110,7 @@ class SeakmcData(LammpsData, MSONable):
                             next_id, id_left, masks, orders = update_id_left(inds, next_id, id_left, masks, orders,
                                                                              iorder, nr, IntersectOnly=True)
                     else:
-                        #if Recursive: print("MASK is TRUE a new chain")
+                        # if Recursive: print("MASK is TRUE a new chain")
                         if not Overlapping:
                             array_atoms.append(thisatoms)
                         center = copy.deepcopy(thisatoms[0])
@@ -1096,13 +1124,8 @@ class SeakmcData(LammpsData, MSONable):
                         indchain.append(inds)
 
                         masks = np.ones(nReal, dtype=bool)
-                        #orders=np.zeros(nReal, dtype=int)
-                        if Overlap4OrderRecursive:
-                            next_id, id_left, masks, orders = update_id_left(inds, next_id, id_left, masks, orders, 0,
-                                                                             nr, IntersectOnly=False)
-                        else:
-                            next_id, id_left, masks, orders = update_id_left(inds, next_id, id_left, masks, orders, 0,
-                                                                             nr, IntersectOnly=True)
+                        next_id, id_left, masks, orders = update_id_left(inds, next_id, id_left, masks, orders,
+                                                                         iorder, nr, IntersectOnly=intersect_only)
                         nchain += 1
             else:
                 if DoRecursive:
@@ -1121,15 +1144,12 @@ class SeakmcData(LammpsData, MSONable):
                         center["zsn"] = np.mean(np.array(thisatoms["zsn"], dtype=float))
                         center["dCN"] = np.mean(np.array(thisatoms["dCN"], dtype=float))
                         indchain, id_chain = update_ichain_info(nr, ichain, center, indchain, inds, id_chain, arrays)
-                        if Overlap4OrderRecursive:
-                            next_id, id_left, masks, orders = update_id_left(inds, next_id, id_left, masks, orders,
-                                                                             iorder, nr, IntersectOnly=False)
-                        else:
-                            next_id, id_left, masks, orders = update_id_left(inds, next_id, id_left, masks, orders,
-                                                                             iorder, nr, IntersectOnly=True)
+                        next_id, id_left, masks, orders = update_id_left(inds, next_id, id_left, masks, orders,
+                                                                         iorder, nr, IntersectOnly=intersect_only)
             return id_chain, indchain, nchain, arrays, masks, orders, next_id, id_left, array_atoms
 
         #########################################################################################################
+
         id_chain = np.zeros(nReal, dtype=int) - 1
         id_left = np.arange(nReal, dtype=int)
         next_id = np.array([], dtype=int)
@@ -1141,40 +1161,34 @@ class SeakmcData(LammpsData, MSONable):
         orders = np.zeros(nReal, dtype=int)
         ithis = 0
         idef = 0
-        while True:
-            if len(id_left) == 0: break
-            try:
-                nr = next_id[idef]
-            except:
-                nr = id_left[0]
-            if Recursive:
-                #print(f"before nr:{nr} mask: {masks[nr]} order:{orders[nr]}")
-                #print(f"masks:{masks} orders:{orders}")
-                #print(f"idef:{idef} next_id:{next_id}")
-                #print(f"id_left:{id_left}")
-                #print("------")
-                thiscoords = np.array([df.iloc[nr]["xsn"], df.iloc[nr]["ysn"], df.iloc[nr]["zsn"]])
-                id_chain, indchain, nchain, arrays, masks, orders, next_id, id_left, array_atoms = update_chain_info(
-                    nReal, nr, thiscoords, id_chain, indchain, nchain,
-                    arrays, masks, next_id, id_left, array_atoms, orders,
-                    Recursive=Recursive, Overlapping=Overlapping, Order4Recursive=Order4Recursive,
-                    Overlap4OrderRecursive=Overlap4OrderRecursive)
-                #print(f"before nr:{nr} mask: {masks[nr]} order:{orders[nr]}")
-                #print(f"masks:{masks} orders:{orders}")
-                #print(f"idef:{idef} next_id:{next_id}")
-                #print(f"id_left:{id_left}")
-                #print("======")
-            else:
-                if masks[nr]:
-                    thiscoords = np.array([df.iloc[nr]["xsn"], df.iloc[nr]["ysn"], df.iloc[nr]["zsn"]])
-                    id_chain, indchain, nchain, arrays, masks, orders, next_id, id_left, array_atoms = (
-                        update_chain_info(nReal, nr, thiscoords, id_chain, indchain, nchain,
-                                          arrays, masks, next_id, id_left, array_atoms, orders,
-                                          Recursive=Recursive, Overlapping=Overlapping, Order4Recursive=Order4Recursive,
-                                          Overlap4OrderRecursive=Overlap4OrderRecursive))
-                else:
-                    pass
+
+        while len(id_left) > 0:
+            nr = next_id[idef] if idef < len(next_id) else id_left[0]
+            if recursion_mode == "single" and not masks[nr]:
+                idef += 1
+                continue
+
+            # print(f"start of this loop:{ithis}")
+            # print(f"before nr:{nr} mask: {masks[nr]} order:{orders[nr]}")
+            # print(f"masks:{masks} orders:{orders}")
+            # print(f"idef:{idef} next_id:{next_id}")
+            # print(f"id_left:{id_left}")
+            # print("------")
+            thiscoords = np.array([df.iloc[nr]["xsn"], df.iloc[nr]["ysn"], df.iloc[nr]["zsn"]])
+            id_chain, indchain, nchain, arrays, masks, orders, \
+                next_id, id_left, array_atoms = update_chain_info(nReal, nr, thiscoords, id_chain,
+                                                                  indchain, nchain, arrays, masks, next_id, id_left,
+                                                                  array_atoms, orders, Recursive=Recursive,
+                                                                  Overlapping=Overlapping)
+            # print(f"after nr:{nr} mask: {masks[nr]} order:{orders[nr]}")
+            # print(f"masks:{masks} orders:{orders}")
+            # print(f"idef:{idef} next_id:{next_id}")
+            # print(f"id_left:{id_left}")
+            # print(f"end of this loop:{ithis}")
+            # print("======")
+
             idef += 1
+            ithis += 1
 
         cols = df.columns.tolist()
         df = pd.DataFrame(arrays, columns=cols)
@@ -1190,7 +1204,7 @@ class SeakmcData(LammpsData, MSONable):
         df.insert(cols.index("xsn"), "xsn", fractional_coords[0])
         df.insert(cols.index("ysn"), "ysn", fractional_coords[1])
         df.insert(cols.index("zsn"), "zsn", fractional_coords[2])
-        #print(df)
+        # print(df)
         if Overlapping:
             array_atoms = [np.array([]) for _ in range(len(df))]
         else:
@@ -1198,7 +1212,7 @@ class SeakmcData(LammpsData, MSONable):
                 itags = array_atoms[i]["itag"]
                 uniqueitags, inds = np.unique(itags, return_index=True)
                 array_atoms[i] = array_atoms[i][inds]
-                #print(f"i:{i} array:{array_atoms[i]['itag']}")
+                # print(f"i:{i} array:{array_atoms[i]['itag']}")
         return df, array_atoms
 
     def sort_defects4PDreduction(self):
@@ -1250,10 +1264,10 @@ class SeakmcData(LammpsData, MSONable):
             logstr = "No defect has been found!"
             error_exit(logstr)
 
+        if rank_world == 0:
+            logstr = f"There are {self.ndefects} defects before the point defect reduction."
+            LogWriter.write_data(logstr)
         if self.sett.active_volume['PDReduction']:
-            if rank_world == 0:
-                logstr = f"There are {self.ndefects} defects before the point defect reduction."
-                LogWriter.write_data(logstr)
             if self.sett.active_volume['SortD4PDR']: self.sort_defects4PDreduction()
             DCut4PDR = self.sett.active_volume['DCut4PDR']
             DCut4PDR = min(DCut4PDR, DActive)
@@ -1262,17 +1276,17 @@ class SeakmcData(LammpsData, MSONable):
             self.defects = self.insert_df_cell(self.defects, self.ndefects, cellcut=DCut4PDR * 1.2)
             self.defects, self.def_atoms = self.find_df_chains(self.defects, DCut4PDR, self.ndefects,
                                                                Recursive=self.sett.active_volume['RecursiveRed'],
-                                                               Overlapping=True,
-                                                               Order4Recursive=self.sett.active_volume[
-                                                                   'Order4Recursive4PDR'], Overlap4OrderRecursive=True)
+                                                               MaxBreadth=self.sett.active_volume[
+                                                                   'MaxBreadth4Recursive4PDR'],
+                                                               Overlapping=True)
             self.ndefects = len(self.defects)
+            if rank_world == 0:
+                logstr = f"There are {self.ndefects} defects after the point defect reduction."
+                LogWriter.write_data(logstr)
         else:
             self.def_atoms = [np.array([]) for _ in range(self.ndefects)]
 
         if not self.sett.active_volume["Overlapping"]:
-            if rank_world == 0:
-                logstr = f"There are {self.ndefects} defects after the point defect reduction."
-                LogWriter.write_data(logstr)
             if isinstance(self.sett.active_volume["DCut4noOverlap"], float):
                 thiscut = self.sett.active_volume["DCut4noOverlap"]
             else:
@@ -1283,20 +1297,16 @@ class SeakmcData(LammpsData, MSONable):
             self.defects = self.insert_df_cell(self.defects, self.ndefects, cellcut=thiscut * 1.2)
             if self.sett.active_volume["Stack4noOverlap"]:
                 defects, def_atoms_array = self.find_df_chains(self.defects, thiscut, self.ndefects, Recursive=True,
-                                                               Overlapping=False,
-                                                               Order4Recursive=self.sett.active_volume[
-                                                                   'Order4Recursive4PDR'],
-                                                               Overlap4OrderRecursive=self.sett.active_volume[
-                                                                   'Overlap4OrderRecursive'])
+                                                               MaxBreadth=self.sett.active_volume[
+                                                                   'MaxBreadth4Recursive4AV'],
+                                                               Overlapping=False)
                 self.defects = pd.concat([defects, df_defects], ignore_index=True)
                 self.def_atoms = def_atoms_array + self.def_atoms
             else:
                 self.defects, self.def_atoms = self.find_df_chains(self.defects, thiscut, self.ndefects, Recursive=True,
-                                                                   Overlapping=False,
-                                                                   Order4Recursive=self.sett.active_volume[
-                                                                       'Order4Recursive4PDR'],
-                                                                   Overlap4OrderRecursive=self.sett.active_volume[
-                                                                       'Overlap4OrderRecursive'])
+                                                                   MaxBreadth=self.sett.active_volume[
+                                                                       'MaxBreadth4Recursive4AV'],
+                                                                   Overlapping=False,)
             self.ndefects = len(self.defects)
 
         if not isinstance(self.sett.active_volume['NMax4Def'], bool):

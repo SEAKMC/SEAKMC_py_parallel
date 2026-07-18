@@ -541,9 +541,8 @@ class Settings:
                   "FCT4RT_SetMolID": ["INF", "INF", "INF", "INF", "INF", "INF"],
                   "NMax4Def": False, "NMax4AV": False, "NMin4AV": 40,
                   "PDReduction": True, "SortD4PDR": False, "DCut4PDR": cutdefectmax * 1.4, "RecursiveRed": False,
-                  "Order4Recursive4PDR": None,
-                  "DCut4noOverlap": 9.0 * cutdefectmax, "Overlapping": True, "Order4Recursive4AV": None,
-                  "Overlap4OrderRecursive": True,
+                  "MaxBreadth4Recursive4PDR": None,
+                  "DCut4noOverlap": 9.0 * cutdefectmax, "Overlapping": True, "MaxBreadth4Recursive4AV": None,
                   "Stack4noOverlap": False, "PointGroupSymm": False, "NMax4PG": 1000,
                   "Sorting": True, "Sort_by": sort_by, "SortingSpacer": [0.3, 0.3, 0.3],
                   "SortingShift": [0.0, 0.0, 0.0],
@@ -645,7 +644,7 @@ class Settings:
                     for i in range(min(3, len(active_volume[key]))):
                         thisav[key][i] = active_volume[key][i]
             elif key == "PBC":
-                for i in range(min(6, len(active_volume[key]))):
+                for i in range(min(3, len(active_volume[key]))):
                     thisav[key][i] = active_volume[key][i]
             else:
                 thisav[key] = active_volume[key]
@@ -933,14 +932,21 @@ class Settings:
 
         if self.active_volume["RT_SetMolID"] and self.active_volume["NPredef"] == 0:
             self.active_volume["NPredef"] = 1
-        if isinstance(self.active_volume["Order4Recursive4PDR"], int):
-            if self.active_volume["Order4Recursive4PDR"] < 1:
-                logstr = "The Order4Recursive4PDR must be >= 1!"
+
+        if isinstance(self.active_volume["MaxBreadth4Recursive4PDR"], int):
+            if self.active_volume["MaxBreadth4Recursive4PDR"] < 1:
+                logstr = "The MaxBreadth4Recursive4PDR must be >= 1!"
                 error_exit(logstr)
-        if isinstance(self.active_volume["Order4Recursive4AV"], int):
-            if self.active_volume["Order4Recursive4AV"] < 1:
-                logstr = "The Order4Recursive4AV must be >= 1!"
-                error_exit(logstr)
+
+        if isinstance(self.active_volume["MaxBreadth4Recursive4AV"], int):
+            if self.active_volume["MaxBreadth4Recursive4AV"] < 1:
+                errormsg = "The MaxBreadth4Recursive4AV must be >= 1!"
+                error_exit(errormsg)
+
+            if self.active_volume["Overlapping"]:
+                errormsg = "The Overlapping must be False if MaxBreadth4Recursive4AV is an integer!"
+                error_exit(errormsg)
+
         if not self.active_volume["Overlapping"]:
             if self.spsearch["SearchBuffer"]:
                 if (self.active_volume["DCut4noOverlap"] <=
