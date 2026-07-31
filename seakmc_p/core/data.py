@@ -946,9 +946,11 @@ class SeakmcData(LammpsData, MSONable):
             dCN_list = []
         return defect_list, dCN_list
 
-    def find_df_chains(self, df, rcut, nReal, Recursive=False, BreadthFirst=False, MaxBreadth=None, Overlapping=True):
+    def find_df_chains(self, df, rcut, nReal, Recursive=False, BreadthFirst=False, MaxBreadth=None,
+                       Overlapping=True, Exclusive=True):
         """
         Build atom chains from the neighbor graph.
+        This chain builder is used in 1) recursive point defect reduction; 2) building super-defects for AV.
 
         Parameters
         ----------
@@ -964,6 +966,10 @@ class SeakmcData(LammpsData, MSONable):
             A value of n includes atoms that are within n neighbor
             levels from the starting atom. This parameter is ignored
             unless BreadthFirst=True.
+        Overlapping: bool, default=True
+            Only used for building super-defects for AV. If False, the constituent defect information is updated.
+        Exclusive: bool, default=True
+            Only used for building super-defects for AV. If True, one defect can only belong to one chain.
 
         Modes
         -----
@@ -1000,7 +1006,7 @@ class SeakmcData(LammpsData, MSONable):
         #########################################################################################################
         def update_chain_info(nReal, nr, thiscoords, id_chain, indchain, nchain, arrays, masks, next_id, id_left,
                               array_atoms, orders,
-                              Recursive=False, Overlapping=True):
+                              Recursive=False, Overlapping=True, Exclusive=True):
             def update_ichain_info(nr, ichain, thiscenter, indchain, inds, id_chain, arrays):
                 icen = np.array([arrays[ichain]["xsn"], arrays[ichain]["ysn"], arrays[ichain]["zsn"]])
                 jcen = np.array([thiscenter["xsn"], thiscenter["ysn"], thiscenter["zsn"]])
@@ -1027,7 +1033,7 @@ class SeakmcData(LammpsData, MSONable):
                 indchain[ichain] = np.hstack((indchain[ichain], inds))
                 return indchain, id_chain
 
-            def update_id_left(inds, next_id, id_left, masks, orders, iorder, nr, IntersectOnly=False):
+            def update_id_left(inds, next_id, id_left, masks, orders, iorder, nr, IntersectOnly=True):
                 ij, i_ind, j_ind = np.intersect1d(inds, id_left, return_indices=True)
                 if IntersectOnly:
                     thisij = np.copy(ij)
@@ -1053,7 +1059,9 @@ class SeakmcData(LammpsData, MSONable):
             inds = np.compress(thisxyznsq < rcutsq, inds, axis=0)
             thisatoms = np.compress(thisxyznsq < rcutsq, thisatoms, axis=0)
 
-            intersect_only = (recursion_mode != "breadthfirst")
+            intersect_only = True
+            if recursion_mode == "breadthfirst" and Exclusive is False:
+                intersect_only = False
             DoRecursive = iorder <= max_breadth
             if recursion_mode == "breadthfirst":
                 valid = orders[inds] <= max_breadth
@@ -1179,7 +1187,7 @@ class SeakmcData(LammpsData, MSONable):
                 next_id, id_left, array_atoms = update_chain_info(nReal, nr, thiscoords, id_chain,
                                                                   indchain, nchain, arrays, masks, next_id, id_left,
                                                                   array_atoms, orders, Recursive=Recursive,
-                                                                  Overlapping=Overlapping)
+                                                                  Overlapping=Overlapping, Exclusive=Exclusive)
             # print(f"after nr:{nr} mask: {masks[nr]} order:{orders[nr]}")
             # print(f"masks:{masks} orders:{orders}")
             # print(f"idef:{idef} next_id:{next_id}")
@@ -1278,7 +1286,8 @@ class SeakmcData(LammpsData, MSONable):
                                                                Recursive=self.sett.active_volume['RecursiveRed'],
                                                                MaxBreadth=self.sett.active_volume[
                                                                    'MaxBreadth4Recursive4PDR'],
-                                                               Overlapping=True)
+                                                               Overlapping=True,
+                                                               Exclusive=True)
             self.ndefects = len(self.defects)
             if rank_world == 0:
                 logstr = f"There are {self.ndefects} defects after the point defect reduction."
@@ -1299,14 +1308,16 @@ class SeakmcData(LammpsData, MSONable):
                 defects, def_atoms_array = self.find_df_chains(self.defects, thiscut, self.ndefects, Recursive=True,
                                                                MaxBreadth=self.sett.active_volume[
                                                                    'MaxBreadth4Recursive4AV'],
-                                                               Overlapping=False)
+                                                               Overlapping=False,
+                                                               Exclusive=self.sett.active_volume['Exclusive'])
                 self.defects = pd.concat([defects, df_defects], ignore_index=True)
                 self.def_atoms = def_atoms_array + self.def_atoms
             else:
                 self.defects, self.def_atoms = self.find_df_chains(self.defects, thiscut, self.ndefects, Recursive=True,
                                                                    MaxBreadth=self.sett.active_volume[
                                                                        'MaxBreadth4Recursive4AV'],
-                                                                   Overlapping=False,)
+                                                                   Overlapping=False,
+                                                                   Exclusive=self.sett.active_volume['Exclusive'])
             self.ndefects = len(self.defects)
 
         if not isinstance(self.sett.active_volume['NMax4Def'], bool):

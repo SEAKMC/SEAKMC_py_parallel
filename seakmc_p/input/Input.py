@@ -541,7 +541,7 @@ class Settings:
                   "FCT4RT_SetMolID": ["INF", "INF", "INF", "INF", "INF", "INF"],
                   "NMax4Def": False, "NMax4AV": False, "NMin4AV": 40,
                   "PDReduction": True, "SortD4PDR": False, "DCut4PDR": cutdefectmax * 1.4, "RecursiveRed": False,
-                  "MaxBreadth4Recursive4PDR": None,
+                  "MaxBreadth4Recursive4PDR": None, "Exclusive": True,
                   "DCut4noOverlap": 9.0 * cutdefectmax, "Overlapping": True, "MaxBreadth4Recursive4AV": None,
                   "Stack4noOverlap": False, "PointGroupSymm": False, "NMax4PG": 1000,
                   "Sorting": True, "Sort_by": sort_by, "SortingSpacer": [0.3, 0.3, 0.3],
