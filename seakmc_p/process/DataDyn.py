@@ -1,13 +1,17 @@
+import time
 from mpi4py import MPI
 
 import seakmc_p.mpiconf.MPIconf as mympi
 from seakmc_p.mpiconf.error_exit import error_exit
+from seakmc_p.general.Timing import timing_print
 
 comm_world = MPI.COMM_WORLD
 rank_world = comm_world.Get_rank()
 size_world = comm_world.Get_size()
 
+
 def data_dynamics(purpose, force_evaluator, data, ntask_tot, nactive=None, nproc_task=1, thisExports=None, **COMM_args):
+    t_all = time.perf_counter()
     start_proc = 0
     if COMM_args is None:
         COMM_args = mympi.get_COMM_info(nproc_task, start_proc=0)
@@ -49,6 +53,6 @@ def data_dynamics(purpose, force_evaluator, data, ntask_tot, nactive=None, nproc
     if not isValid:
         error_exit(errormsg)
 
+    timing_print(f"data_dynamics purpose={purpose} ntask_tot={ntask_tot} nactive={nactive} total_s={time.perf_counter() - t_all:.6f}", rank_world)
     return [Eground, relaxed_coords, isValid, errormsg]
-
 

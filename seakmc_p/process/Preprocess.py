@@ -4,6 +4,8 @@ from mpi4py import MPI
 
 import seakmc_p.general.General as mygen
 import seakmc_p.process.DataDyn as mydatadyn
+from seakmc_p.process.CropInput import maybe_crop_input_for_active_relax
+from seakmc_p.general.Timing import timing_print
 from seakmc_p.core.data import SeakmcData
 from seakmc_p.restart.Restart import RESTART
 import seakmc_p.mpiconf.MPIconf as mympi
@@ -45,6 +47,20 @@ def initial_data_dynamics(thissett, seakmcdata, force_evaluator, LogWriter, **CO
     size_world = comm_world.Get_size()
     ntask_tot = 1
     nproc_task = thissett.force_evaluator['nproc']
+    initial_relax_active_only = thissett.data.get("InitialRelaxActiveOnly", False)
+    if initial_relax_active_only:
+        if thissett.data.get("MoleDyn", False):
+            error_exit("data.InitialRelaxActiveOnly does not support data.MoleDyn.")
+        if thissett.saddle_point.get("CalBarrsInData", False):
+            error_exit("data.InitialRelaxActiveOnly does not support saddle_point.CalBarrsInData.")
+        if thissett.force_evaluator["TrialDisps2Basin"].get("TrialDisps2Basin", False):
+            error_exit("data.InitialRelaxActiveOnly does not support force_evaluator.TrialDisps2Basin.")
+        if rank_world == 0:
+            logstr = ("data.InitialRelaxActiveOnly=true: skipping global initial DATAMD/DATAOPT. "
+                      "Active-volume initial relaxation will be done after AV construction.")
+            LogWriter.write_data(logstr)
+        timing_print("initial_data_dynamics skipped_global_relax reason=InitialRelaxActiveOnly", rank_world)
+        return seakmcdata, 0.0
     if thissett.data["MoleDyn"]:
         if rank_world == 0:
             logstr = "Molecular dynamics simulation of the initial structure ..."
@@ -150,6 +166,8 @@ def preprocess(thissett):
                      Screen=thissett.force_evaluator['Screen'], Log=thissett.force_evaluator['LogFile'], **GPU_args)
 
     if thisRestart is None:
+        maybe_crop_input_for_active_relax(thissett, os.path.join(os.getcwd(), "input.yaml"),
+                                          rank_world=rank_world, comm_world=comm_world, log_writer=LogWriter)
         seakmcdata = SeakmcData.from_file(thissett.data['FileName'], atom_style=thissett.data['atom_style'])
         seakmcdata.assert_settings(thissett)
         seakmcdata.to_atom_style()
@@ -168,7 +186,9 @@ def preprocess(thissett):
         Eground = thisRestart.Eground
         istep_this = thisRestart.istep_this
         simulation_time = thisRestart.simulation_time
-        if Eground is None or Eground == 0.0:
+        if thissett.data.get("InitialRelaxActiveOnly", False) and Eground is None:
+            Eground = 0.0
+        if (Eground is None or Eground == 0.0) and not thissett.data.get("InitialRelaxActiveOnly", False):
             [Eground, relaxed_coords, isValid, errormsg] = mydatadyn.data_dynamics("DATAMD0", force_evaluator,
                                                                                    seakmcdata, 1,
                                                                                    nactive=seakmcdata.natoms,
