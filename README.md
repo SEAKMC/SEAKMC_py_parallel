@@ -255,19 +255,21 @@ SEAKMC_py_parallel/
 
 ## Citation
 
-If you use SEAKMC_py_parallel in your research, please cite the relevant publications describing the SEAKMC method. See the [`SEAKMC_MANUAL.pdf`](SEAKMC_MANUAL.pdf) for citation details and methodology references.
+1. Tao Liang and Haixuan Xu, Saddle point search with dynamic active volume, Computational Materials Science 228, 112354 (2023), DOI: https://doi.org/10.1016/j.commatsci.2023.112354
+
+2. H. Xu, Y. N. Osetsky and R. E. Stoller, "Self-evolving atomistic kinetic Monte Carlo: fundamentals and applications," Journal of Physics: Condensed Matter, vol. 24, p. 375402, 2012, DOI: https://doi.org/10.1088/0953-8984/24/37/375402
 
 ---
 
 ## License
 
-This project is licensed under the **BSD License** — see the [LICENSE](LICENSE) file for details.
-
-Copyright © 2019, Tao Liang. All rights reserved.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
 ## Contact
+**Haixuan Xu**
+- Email: hxu8@utk.edu
 
 **Tao Liang**
 - GitHub: [@TaoLiang120](https://github.com/TaoLiang120)
