@@ -1,11 +1,12 @@
 # SEAKMC_py_parallel
 
-**Self-Evolving Atomistic Kinetic Monte Carlo — Parallel Python Implementation**
-
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
-[![License: BSD](https://img.shields.io/badge/License-BSD-green.svg)](LICENSE)
+[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD-green.svg)](LICENSE)
 
-SEAKMC_py_parallel (`seakmc_p`) is a massively parallel Python implementation of the **Self-Evolving Atomistic Kinetic Monte Carlo (SEAKMC)** method for simulating long-timescale atomistic kinetic processes in materials — such as defect migration, clustering, and microstructural evolution — *without* predefined event catalogs.
+**Self-Evolving Atomistic Kinetic Monte Carlo (SEAKMC)** is a Python-based atomistic simulation framework for exploring long-timescale material evolution using kinetic Monte Carlo (KMC).
+
+SEAKMC constructs saddle-point/event catalogs on the fly and enables efficient sampling of the potential energy landscape through **spatial decomposition into localized active volumes (AVs)** and **MPI-based parallel saddle-point searches**.
+
 
 ---
 
@@ -20,9 +21,11 @@ SEAKMC_py_parallel (`seakmc_p`) is a massively parallel Python implementation of
 - [Input Configuration](#input-configuration)
 - [Examples](#examples)
 - [Project Structure](#project-structure)
+- [History](#history)
 - [Citation](#citation)
 - [License](#license)
 - [Contact](#contact)
+
 
 ---
 
@@ -253,23 +256,35 @@ SEAKMC_py_parallel/
 
 ---
 
+## History
+
+1. H. Xu, Y. N. Osetsky, and R. E. Stoller, "Simulating complex atomistic processes: On-the-fly kinetic Monte Carlo scheme with selective active volumes", Physical Review B 84, 132103 (2011). DOI: https://doi.org/10.1088/0953-8984/24/37/375402
+2. H. Xu, Y. N. Osetsky, and R. E. Stoller, "Self-evolving atomistic kinetic Monte Carlo: fundamentals and applications", Journal of Physics: Condensed Matter 24, 375402 (2012). DOI: https://doi.org/10.1088/0953-8984/24/37/375402
+3. H. Xu, R. E. Stoller, L. K. Beland, and Y. N. Osetsky, "Self-Evolving Atomistic Kinetic Monte Carlo simulations of defects in materials", Computational Materials Science 100B (2015). DOI: https://doi.org/10.1016/j.commatsci.2014.12.026
+4. A. Ervin and H. Xu, "Mesoscale simulations of radiation damage effects in Materials: A SEAKMC perspective", Computational Materials Science 150, 180 (2018). DOI: https://doi.org/10.1016/j.commatsci.2018.03.054
+5. S. Hayakawa, J. Isaacs, H. R. Medal, and H. Xu, "Atomistic modeling of meso-timescale processes with SEAKMC: A perspective and recent developments", Computational Materials Science 194, 110390 (2021). DOI: https://doi.org/10.1016/j.commatsci.2021.110390
+6. S. Hayakawa and H. Xu, "Saddle point sampling using scaled normal coordinates", Computational Materials Science 200, 110785 (2021). DOI: https://doi.org/10.1016/j.commatsci.2021.110785
+7. T. Liang and H. Xu, "Saddle point search with dynamic active volume", Computational Materials Science 228, 112354 (2023). DOI: https://doi.org/10.1016/j.commatsci.2023.112354
+
+---
+
 ## Citation
 
-1. Tao Liang and Haixuan Xu, Saddle point search with dynamic active volume, Computational Materials Science 228, 112354 (2023), DOI: https://doi.org/10.1016/j.commatsci.2023.112354
+1. T. Liang and H. Xu, "Saddle point search with dynamic active volume", Computational Materials Science 228, 112354 (2023). DOI: https://doi.org/10.1016/j.commatsci.2023.112354
 
-2. H. Xu, Y. N. Osetsky and R. E. Stoller, "Self-evolving atomistic kinetic Monte Carlo: fundamentals and applications," Journal of Physics: Condensed Matter, vol. 24, p. 375402, 2012, DOI: https://doi.org/10.1088/0953-8984/24/37/375402
+2. H. Xu, Y. N. Osetsky, and R. E. Stoller, "Self-evolving atomistic kinetic Monte Carlo: fundamentals and applications", Journal of Physics: Condensed Matter 24, 375402 (2012). DOI: https://doi.org/10.1088/0953-8984/24/37/375402
 
 ---
 
 ## License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **BSD-3-Clause** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
 ## Contact
 **Haixuan Xu**
-- Email: hxu8@utk.edu
+- Email: xhx@utk.edu
 
 **Tao Liang**
 - GitHub: [@TaoLiang120](https://github.com/TaoLiang120)
