@@ -3,37 +3,25 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD-green.svg)](LICENSE)
 
-**Self-Evolving Atomistic Kinetic Monte Carlo (SEAKMC)** is a Python-based atomistic simulation framework for exploring long-timescale material evolution using kinetic Monte Carlo (KMC).
+**Self-Evolving Atomistic Kinetic Monte Carlo (SEAKMC)** is a Python-based atomistic simulation framework for exploring long-timescale material evolution using kinetic Monte Carlo (KMC). SEAKMC constructs saddle-point/event catalogs on the fly and enables efficient sampling of the potential energy landscape through **spatial decomposition into localized active volumes (AVs)** and **MPI-based parallel saddle-point searches**. **SEAKMC** is designed for studying defect evolution, diffusion, irradiation effects, phase transformations, and microstructural evolution in materials.
 
-SEAKMC constructs saddle-point/event catalogs on the fly and enables efficient sampling of the potential energy landscape through **spatial decomposition into localized active volumes (AVs)** and **MPI-based parallel saddle-point searches**.
+SEAKMC is free to use. We welcome contributions to help improve this library, including new tools or modules, feature requests, bug reports, and other suggestions.
 
+- [User Manual][SEAKMC Manual]
+- Bug reports or feature requests: Please submit a [GitHub issue].
+- Code contributions via [pull request] are welcome.
 
----
-
-## Table of Contents
-
-- [Key Features](#key-features)
-- [How It Works](#how-it-works)
-- [Architecture](#architecture)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Input Configuration](#input-configuration)
-- [Examples](#examples)
-- [Project Structure](#project-structure)
-- [History](#history)
-- [Citation](#citation)
-- [License](#license)
-- [Contact](#contact)
-
+[SEAKMC Manual]: https://github.com/SEAKMC/SEAKMC_py_parallel/blob/main/SEAKMC_MANUAL.pdf
+[pull request]: https://github.com/SEAKMC/SEAKMC_py_parallel/pulls
+[github issue]: https://github.com/SEAKMC/SEAKMC_py_parallel/issues
 
 ---
 
 ## Key Features
 
-- **On-the-fly saddle point discovery** — No predefined event catalog required. Transition states are found dynamically using the **Dimer method**.
+- **On-the-fly saddle point discovery** — No predefined event catalog required.
 - **Active Volume decomposition** — Computationally expensive searches are localized to spatial regions around defects (Active Volumes), enabling simulation of large bulk systems.
-- **MPI-based parallelism** — Dynamic MPI communicator splitting distributes multiple Active Volume searches and Dimer runs concurrently across worker tasks.
+- **MPI-based parallelism** — Dynamic MPI communicator splitting distributes multiple saddle point searches concurrently across worker tasks.
 - **Defect Bank recycling** — Previously discovered defect displacement patterns are cached and recycled across KMC steps to accelerate convergence.
 - **Crystal symmetry exploitation** — Point group and space group symmetry operations reduce redundant saddle point searches.
 - **Vineyard HTST prefactors** — Harmonic Transition State Theory rate prefactors are computed via dynamical matrix diagonalization (LAPACK).
@@ -42,80 +30,102 @@ SEAKMC constructs saddle-point/event catalogs on the fly and enables efficient s
   - **LAMMPS** (standalone binary via system calls)
   - **PyLAMMPS** (in-process Python bindings, zero file I/O)
   - **VASP** (ab-initio DFT)
+  - **JAX-MD**
 - **Checkpoint/restart support** — Full simulation state is serialized via `pickle` for fault-tolerant long-running simulations.
 
 ---
 
-## How It Works
+## Why Spatial Decomposition?
 
-SEAKMC evolves an atomistic system through four main stages at each KMC step:
+Saddle points are typically associated with localized atomic rearrangements around defects. Instead of performing saddle-point searches on the entire simulation cell, the system is decomposed into localized **active volumes**[1], each treated as an independent subsystem.
 
+This decomposition substantially reduces the dimensionality of individual saddle-point searches and allows multiple AVs to be processed concurrently.
+
+```text
+                 Full Atomistic System
+                         │
+                  Defect Identification
+                         │
+             ┌───────────┴───────────┐
+             │                       │
+           Defect 1                Defect 2
+             │                       │
+          ┌──▼──┐                  ┌──▼──┐
+          │ AV1 │                  │ AV2 │
+          └──┬──┘                  └──┬──┘
+             │                       │
+       Saddle-point             Saddle-point
+        searches                  searches
+             │                       │
+             └───────────┬───────────┘
+                         │
+                  Event / SP Catalog
+                         │
+                         ▼
+                        KMC
 ```
-┌─────────────────────────────────────────────────────────┐
-│  1. PREPROCESS                                          │
-│     • Read input.yaml & atomic structure                │
-│     • Initialize MPI communicators & working folders    │
-│     • Perform initial relaxation or MD                  │
-│     • Check for restart files                           │
-├─────────────────────────────────────────────────────────┤
-│  2. DEFECT IDENTIFICATION & ACTIVE VOLUME CONSTRUCTION  │
-│     • Detect point defects / interstitials / vacancies  │
-│     • Build Active Volumes around defect centers        │
-│     • Partition atoms into active, buffer, and fixed    │
-├─────────────────────────────────────────────────────────┤
-│  3. PARALLEL SADDLE POINT SEARCH                        │
-│     • Dispatch AV searches across MPI sub-communicators │
-│     • Load seed displacements from DefectBank           │
-│     • Run Dimer searches to locate saddle points        │
-│     • Apply symmetry operations & screen results        │
-│     • Calculate Vineyard HTST prefactors                │
-├─────────────────────────────────────────────────────────┤
-│  4. KMC EVENT SELECTION & STATE UPDATE                  │
-│     • Calculate escape rates: k = ν₀·exp(−Eₐ/kᵦT)     │
-│     • Form SuperBasin if trapped states detected        │
-│     • Select event via stochastic sampling              │
-│     • Advance simulation time                           │
-│     • Apply displacement & relax to new minimum         │
-│     • Write outputs & restart checkpoint                │
-└─────────────────────────────────────────────────────────┘
+
+The **Dynamic Active Volume (DAV)**[2] further reduces the number of active degrees of freedom by deactivating atoms that are not important to the saddle-point search. This improves both computational efficiency and the ability to identify relevant saddle points.
+1. H. Xu, Y. N. Osetsky, and R. E. Stoller, "Self-evolving atomistic kinetic Monte Carlo: fundamentals and applications", Journal of Physics: Condensed Matter 24, 375402 (2012). DOI: https://doi.org/10.1088/0953-8984/24/37/375402
+2. T. Liang and H. Xu, "Saddle point search with dynamic active volume", Computational Materials Science 228, 112354 (2023). DOI: https://doi.org/10.1016/j.commatsci.2023.112354
+---
+
+## SEAKMC Workflow
+
+A typical SEAKMC simulation follows the sequence:
+
+```text
+Input / Restart / Defect Bank
+              │
+              ▼
+        MD / Relaxation
+              │
+              ▼
+      Defect Identification
+              │
+              ▼
+       Active Volume Setup
+              │
+              ▼
+      Preload Existing SPs
+              │
+              ▼
+       Scale Normal Coordinates
+              │
+              ▼
+   Parallel Saddle-Point Search
+              │
+              ▼
+         AV Relaxation
+              │
+              ▼
+        Validate SPs
+              │
+              ▼
+      Post-process SPs
+              │
+              ▼
+        Recycle SPs
+              │
+              ▼
+      Energy Recalibration
+              │
+              ▼
+          KMC / LEB
+              │
+              ▼
+       System Relaxation
+              │
+              └──────────────► Repeat
 ```
 
 ---
 
-## Architecture
+## Energy and Force Evaluation
 
-```
-seakmc_p/
-├── core/           # Atomistic data structures, box geometry, Active Volumes, symmetry
-├── datasps/        # Master/worker parallel SPS scheduler, pre/post-processing, recalibration
-├── dynmat/         # Dynamical matrix, Hessian, vibrational frequencies, HTST prefactors
-├── general/        # Logging, CSV summary writers, output formatting, object factory
-├── input/          # YAML input parser, settings validation, global parameters
-├── kmc/            # Basin & SuperBasin rate calculation, KMC event selection engine
-├── mpiconf/        # MPI communicator splitting, task partitioning, error handling
-├── process/        # High-level controllers: preprocess, main KMC loop, postprocess
-├── restart/        # Checkpoint serialization & deserialization
-├── runner/         # Force evaluator interfaces: LAMMPS, PyLAMMPS, VASP
-└── spsearch/       # Dimer method, SaddlePoint objects, DefectBank storage
-```
+SEAKMC itself does **not** provide an energy or force evaluator. It provides a Python interface to **pyLAMMPS**, **LAMMPS**, and **VASP**. The interface to **JAX-MD** is under development.
 
-### Key Classes
-
-| Class | Module | Description |
-|---|---|---|
-| `SeakmcData` | `core.data` | Full atomistic system representation (atoms, masses, velocities, defects) |
-| `ActiveVolume` | `core.data` | Localized region around a defect with active/buffer/fixed atoms |
-| `Dimer` | `spsearch.SPSearch` | Dimer method implementation for saddle point location |
-| `SaddlePoint` | `spsearch.SaddlePoints` | Single saddle point with barriers, prefactor, and connectivity |
-| `DefectBank` | `spsearch.SaddlePoints` | Database of reusable defect displacement patterns |
-| `DynMat` / `VibMats` | `dynmat.Dynmat` | Dynamical matrix and Vineyard prefactor computation |
-| `Basin` / `SuperBasin` | `kmc.KMC` | KMC rate calculation and trapped-state acceleration |
-| `Settings` | `input.Input` | Configuration container loaded from `input.yaml` |
-| `RESTART` | `restart.Restart` | Simulation state checkpoint for fault tolerance |
-| `LammpsRunner` | `runner` | Standalone LAMMPS force evaluator |
-| `PyLammpsRunner` | `runner` | In-process PyLAMMPS force evaluator |
-| `VaspRunner` | `runner` | VASP DFT force evaluator |
-
+The framework can also be extended to incorporate other energy and force evaluators.
 ---
 
 ## Requirements
@@ -189,25 +199,6 @@ if __name__ == "__main__":
 
 ---
 
-## Input Configuration
-
-All simulation parameters are specified in a single `input.yaml` file. Key configuration sections include:
-
-| Section | Description |
-|---|---|
-| **System** | Atomic structure file, atom style, species, and box dimensions |
-| **ForceEvaluator** | Force evaluator backend (`lammps`, `pylammps`, or `vasp`), potential definition, and LAMMPS input script |
-| **KMC** | Temperature, number of KMC steps, transient energy cuts |
-| **ActiveVolume** | Cutoff radii for active/buffer regions, defect detection parameters |
-| **DimerSearch** | Dimer method parameters (convergence, step sizes, max iterations) |
-| **DynMat** | Dynamical matrix calculation settings, displacement magnitude |
-| **DefectBank** | Defect pattern storage and recycling options |
-| **SuperBasin** | SuperBasin detection and grouping criteria |
-| **Output** | Visualization data, summary CSV, and restart checkpoint options |
-
-A complete annotated example is provided at [`run_script/input.yaml`](run_script/input.yaml).
-
----
 
 ## Examples
 
@@ -227,36 +218,10 @@ Sample LAMMPS input scripts are also provided:
 
 ---
 
-## Project Structure
-
-```
-SEAKMC_py_parallel/
-├── seakmc_p/                  # Main package
-│   ├── __init__.py
-│   ├── core/                  # Data structures, box, Active Volumes, symmetry
-│   ├── datasps/               # Parallel SPS scheduling & data management
-│   ├── dynmat/                # Dynamical matrix & HTST prefactors
-│   ├── general/               # Logging, output writers, object factory
-│   ├── input/                 # YAML input parsing & settings
-│   ├── kmc/                   # KMC engine, Basin, SuperBasin
-│   ├── mpiconf/               # MPI communicator management
-│   ├── process/               # Preprocess, main loop, postprocess
-│   ├── restart/               # Checkpoint/restart serialization
-│   ├── runner/                # Force evaluator backends
-│   └── spsearch/              # Dimer method, SaddlePoints, DefectBank
-├── examples/                  # Example simulations & sample inputs
-├── run_script/                # Run script & sample input.yaml
-├── modify_molecule_id.py      # Utility to modify atom molecule-IDs
-├── requirements.txt           # Python dependencies
-├── setup.py                   # Package setup
-├── SEAKMC_MANUAL.pdf          # User manual
-├── LICENSE                    # BSD License
-└── README.md                  # This file
-```
-
----
-
 ## History
+SEAKMC was originally developed by Haixuan Xu in 2011 [1-4] and was subsequently advanced to incorporate angle-check methods for parallel saddle-point searches [5] and scaled normal-coordinate (SNC) [6]. Earlier versions of SEAKMC were written in Fortran, as shown in the [SEAKMC Legacy] project. In 2023, Tao Liang and Haixuan Xu introduced the concept of the dynamic active volume (DAV) [7] and rewrote SEAKMC in Python. The new implementation incorporates many advanced features, including dynamic and automatic active-volume characterization, parallel saddle-point searches, defect-bank recycling, superbasin acceleration based on the mean-rate method, user-defined spatial decomposition, and MPI-based parallelism.
+
+[SEAKMC Legacy]: https://github.com/SEAKMC/SEAKMC_Legacy
 
 1. H. Xu, Y. N. Osetsky, and R. E. Stoller, "Simulating complex atomistic processes: On-the-fly kinetic Monte Carlo scheme with selective active volumes", Physical Review B 84, 132103 (2011). DOI: https://doi.org/10.1088/0953-8984/24/37/375402
 2. H. Xu, Y. N. Osetsky, and R. E. Stoller, "Self-evolving atomistic kinetic Monte Carlo: fundamentals and applications", Journal of Physics: Condensed Matter 24, 375402 (2012). DOI: https://doi.org/10.1088/0953-8984/24/37/375402
@@ -270,9 +235,9 @@ SEAKMC_py_parallel/
 
 ## Citation
 
-1. T. Liang and H. Xu, "Saddle point search with dynamic active volume", Computational Materials Science 228, 112354 (2023). DOI: https://doi.org/10.1016/j.commatsci.2023.112354
+1. H. Xu, Y. N. Osetsky, and R. E. Stoller, "Self-evolving atomistic kinetic Monte Carlo: fundamentals and applications", Journal of Physics: Condensed Matter 24, 375402 (2012). DOI: https://doi.org/10.1088/0953-8984/24/37/375402
 
-2. H. Xu, Y. N. Osetsky, and R. E. Stoller, "Self-evolving atomistic kinetic Monte Carlo: fundamentals and applications", Journal of Physics: Condensed Matter 24, 375402 (2012). DOI: https://doi.org/10.1088/0953-8984/24/37/375402
+2. T. Liang and H. Xu, "Saddle point search with dynamic active volume", Computational Materials Science 228, 112354 (2023). DOI: https://doi.org/10.1016/j.commatsci.2023.112354
 
 ---
 
