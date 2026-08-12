@@ -144,7 +144,7 @@ The framework can also be extended to incorporate other energy and force evaluat
 ---
 
 ## Installation
-
+Noting that SEAKMC itself does **not** provide an energy or force evaluator, the user must install a compatible energy/force evaluator package (e.g., `lammps`, `pylammps`, `vasp`, `jax-md`) before installing SEAKMC.
 ### From Source
 
 ```bash
@@ -152,12 +152,13 @@ git clone https://github.com/TaoLiang120/SEAKMC_py_parallel.git
 cd SEAKMC_py_parallel
 pip install -e .
 ```
-
-### Dependencies
-
+### Integrated installer [Integrated installer]
+The [Integrated installer] is an integrated bash script to install pyLAMMPS, Open-KIM force field, mpi4py, and SEAKMC.
 ```bash
-pip install -r requirements.txt
+bash install_integrated.sh
 ```
+
+[Integrated installer]: https://github.com/TaoLiang120/Integrated_installer
 
 > **Note:** `mpi4py` requires a working MPI installation (e.g., OpenMPI, MPICH). The `lammps` Python package requires LAMMPS to be compiled as a shared library.
 
