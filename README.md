@@ -155,10 +155,10 @@ pip install -e .
 ### Integrated installer [Integrated installer]
 The [Integrated installer] is an integrated bash script to install pyLAMMPS, Open-KIM force field, mpi4py, and SEAKMC.
 ```bash
-bash install_integrated.sh
+bash integrated_installer.sh
 ```
 
-[Integrated installer]: https://github.com/TaoLiang120/Integrated_installer
+[Integrated installer]: https://github.com/SEAKMC/SEAKMC_py_parallel/blob/main/integrated_installer.sh
 
 > **Note:** `mpi4py` requires a working MPI installation (e.g., OpenMPI, MPICH). The `lammps` Python package requires LAMMPS to be compiled as a shared library.
 
@@ -167,16 +167,18 @@ bash install_integrated.sh
 ## Quick Start
 
 1. **Prepare your input files:**
-   - An atomic structure data file (LAMMPS data format)
-   - A LAMMPS input script (e.g., `in.lammps`) with your interatomic potential
+   - An atomic structure data file (LAMMPS data format) 
    - An `input.yaml` configuration file (see [Input Configuration](#input-configuration))
-
+   - The interatomic potential file(s) (e.g., `Fe-P.eam.fs`)
+   - (Optional) A LAMMPS input script (e.g., `in.lammps`) with your interatomic potential
+   
+    > **Note:** The sample input files is available in [`examples/`](examples/) directory
 2. **Run with MPI:**
 
 ```bash
 mpirun -np <nprocs> python run_seakmc_p.py
 ```
-
+ > **Note:** run_seakmc_p.py is available in [`run_script/`](run_script/) directory 
 Or, if installed as a console script:
 
 ```bash
