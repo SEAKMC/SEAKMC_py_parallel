@@ -201,9 +201,6 @@ The [`examples/`](examples/) directory contains ready-to-run demonstrations:
 | [`SelectedDefects`](examples/SelectedDefects) | SEAKMC on selected defect complexes (e.g., dumbbell + vacancy) |
 | [`Use_calllammps`](examples/Use_calllammps) | Using standalone LAMMPS/VASP via system call scripts |
 
-Sample LAMMPS input scripts are also provided:
-- [`examples/in.sample.lammps`](examples/in.sample.lammps) — Standalone LAMMPS mode
-- [`examples/in.sample.pylammps`](examples/in.sample.pylammps) — PyLAMMPS in-process mode
 
 ---
 
