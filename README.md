@@ -172,33 +172,19 @@ bash integrated_installer.sh
    - The interatomic potential file(s) (e.g., `Fe-P.eam.fs`)
    - (Optional) A LAMMPS input script (e.g., `in.lammps`) with your interatomic potential
    
-    > **Note:** The sample input files is available in [`examples/`](examples/) directory
+    > **Note:** The sample input files are available in each example in the [`examples/`](examples/) directory
 2. **Run with MPI:**
 
 ```bash
 mpirun -np <nprocs> python run_seakmc_p.py
 ```
- > **Note:** run_seakmc_p.py is available in [`run_script/`](run_script/) directory 
+
 Or, if installed as a console script:
 
 ```bash
 mpirun -np <nprocs> seakmc_p
 ```
-
-### Minimal Run Script
-
-```python
-from seakmc_p.input.Input import Settings
-from seakmc_p.process.Preprocess import preprocess
-from seakmc_p.process.Process import run_seakmc
-from seakmc_p.process.Postprocess import postprocess
-
-if __name__ == "__main__":
-    settings = Settings.from_file("input.yaml")
-    preprocess(settings)
-    run_seakmc(settings)
-    postprocess(settings)
-```
+ > **Note:** run_seakmc_p.py is available in the [`run_script/`](run_script/) directory 
 
 ---
 
