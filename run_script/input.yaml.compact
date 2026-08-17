@@ -41,6 +41,16 @@ data:
     RinputOpt: False
     BoxRelax: False
     Relaxed: False
+    InitialRelaxActiveOnly: False
+    DActive4InitialRelax: False
+    CropInputForActiveRelax:
+        Enable: False
+        OutputFile: data.cropped.dat
+        Ranges:
+            - [-80.0, 80.0]
+            - [-80.0, 80.0]
+            - [-80.0, 80.0]
+        SummaryFile: scan_input_summary.json
 kinetic_MC:
     NSteps: 1
     Temp: 800.0
@@ -48,6 +58,7 @@ kinetic_MC:
     EnCut4Transient: 0.5
     Handle_no_Backward: OUT
     DispStyle: FI
+    RelaxAfterKMC: True
     NMaxBasin: NA
 saddle_point:
     BarrierCut: 10.0
@@ -100,8 +111,8 @@ active_volume:
     FindDefects:
         Method: BLCN
         Defects:
-            - 27.3567, 27.3567, 27.3567 
-            - 20.3567, 20.3567, 20.3567 
+            - 27.3567, 27.3567, 27.3567
+            - 20.3567, 20.3567, 20.3567
     DActive: 12.0
     DBuffer: 2.0
     DFixed: 10

@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+DataOut/
+SPOut/
+AVOut/
+DefectBank/
+Runner_*/
+tmp0.dat
+tmp1.dat
+tmp2.dat
+log.lammps
+dump.*
+*.restart
+*.cropped
+*.cropped.dat
+scan_input_summary.json

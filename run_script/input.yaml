@@ -51,7 +51,7 @@ force_evaluator:
        BoxRelax: False
        InitTemp4Opt: 0.0
        TargetTemp4NVT: 5.0
-       NVTSteps4Opt: 10000    
+       NVTSteps4Opt: 10000
     RinputOpt: False
     RinputMD0: False
     nproc4ReCal: auto
@@ -80,6 +80,16 @@ data:
     atom_style: atomic
     FileName: data.small.dat
     Relaxed: False
+    InitialRelaxActiveOnly: False
+    DActive4InitialRelax: False
+    CropInputForActiveRelax:
+        Enable: False
+        OutputFile: data.cropped.dat
+        Ranges:
+            - [-80.0, 80.0]
+            - [-80.0, 80.0]
+            - [-80.0, 80.0]
+        SummaryFile: scan_input_summary.json
     BoxRelax: False
     MoleDyn: False
     RinputMD: False
@@ -93,6 +103,7 @@ kinetic_MC:
     Temp: 800
     AccStyle: NoAcc
     DispStyle: SP
+    RelaxAfterKMC: True
     EnCut4Transient: 0.5
     Tol4Disp: 0.1
     Tol4Barr: 0.03
@@ -146,7 +157,7 @@ saddle_point:
     DsumMin: 0.0
     DsumrCut: NA
     DsumrMin: 0.0
-    DmagCut_FI: NA 
+    DmagCut_FI: NA
     DmagMin_FI: 0.0
     DtotCut_FI: NA
     DtotMin_FI: 0.0
@@ -175,7 +186,7 @@ saddle_point:
         toScreenDisp: NotConn
         toScreenEng: NotConn
         AND4ScreenDE: True
-        ScreenDisp: 
+        ScreenDisp:
             AND4ScreenD:
                 - True
             Str4ScreenD:
@@ -304,7 +315,7 @@ spsearch:
     DynCut4SPAtom: False
     ShowIterationResults: False
     Inteval4ShowIterationResults: 1
-    ShowVN4ShowIterationResults: False 
+    ShowVN4ShowIterationResults: False
     ShowCoords4ShowIterationResults: False
     OutForces4IterationResults: False
     OutFix4IterationResults: False
