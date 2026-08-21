@@ -1,8 +1,8 @@
 import numpy as np
 
-from mpi4py import MPI
 
 from seakmc.mpiconf.error_exit import error_exit
+from seakmc.mpiconf.context import mpi
 
 __author__ = "Tao Liang"
 __copyright__ = "Copyright 2021"
@@ -46,7 +46,7 @@ def get_ntask_time(nproc_task, start_proc=0, thiscomm=None):
     if thiscomm is not None:
         pass
     else:
-        thiscomm = MPI.COMM_WORLD
+        thiscomm = mpi.comm
     size_local = thiscomm.Get_size()
     #rank_local = thiscomm.Get_rank()
     if size_local < nproc_task + start_proc:
@@ -61,7 +61,7 @@ def split_communicator(nproc_task, start_proc=0, thiscomm=None):
     if thiscomm is not None:
         pass
     else:
-        thiscomm = MPI.COMM_WORLD
+        thiscomm = mpi.comm
     size_local = thiscomm.Get_size()
     rank_local = thiscomm.Get_rank()
     if rank_local < start_proc:
@@ -73,7 +73,7 @@ def split_communicator(nproc_task, start_proc=0, thiscomm=None):
     return comm_split, thiscolor
 
 def get_COMM_info(nproc_task, start_proc=0):
-    comm_world = MPI.COMM_WORLD
+    comm_world = mpi.comm
     size_world = comm_world.Get_size()
     if nproc_task == size_world:
         COMM_dict = {"isSplit": False, "color": 0, "thiscomm": comm_world}

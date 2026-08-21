@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import curve_fit
 
-from mpi4py import MPI
 from seakmc.core.data import SeakmcData
 import seakmc.process.DataDyn as mydatadyn
 from seakmc.input.Input import SP_COMPACT_HEADER4Delete
@@ -16,6 +15,7 @@ import seakmc.datasps.PreSPS as preSPS
 import seakmc.datasps.DataSPS as dataSPS
 from seakmc.kmc.KMC import Basin
 from seakmc.mpiconf.error_exit import error_exit
+from seakmc.mpiconf.context import mpi
 
 KB = 8.617333262145e-5
 class TrialDisp2Basin:
@@ -43,7 +43,7 @@ class TrialDisp2Basin:
 
 
     def relax_basin(self, force_evaluator, LogWriter, ntask_tot=1, nproc_task=1, **COMM_args):
-        comm_world = MPI.COMM_WORLD
+        comm_world = mpi.comm
         rank_world = comm_world.Get_rank()
 
         ntask_tot = 1
@@ -71,7 +71,7 @@ class TrialDisp2Basin:
         self.thisdata.velocities = None
 
     def run_seakmc(self, istep, thissett, object_dict):
-        comm_world = MPI.COMM_WORLD
+        comm_world = mpi.comm
         rank_world = comm_world.Get_rank()
 
         out_paths = object_dict['out_paths']

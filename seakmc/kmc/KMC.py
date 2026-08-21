@@ -3,11 +3,11 @@ import copy
 import numpy as np
 import pandas as pd
 import scipy.linalg
-from mpi4py import MPI
 
 from seakmc.core.util import mat_mag
 from seakmc.input.Input import SP_KMC_HEADER, SP_DATA_HEADER
 from seakmc.input.Input import SP_KMC_SELECTED_HEADER, NENTRY_SELECTED_HEADER, NDISPARRAY, SEQUENCE_DISPARRAY
+from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -17,9 +17,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
 
 KB = 8.617333262145e-5
 
@@ -580,7 +577,7 @@ class DataKMC:
             arraylist[istart + 19] = np.append(arraylist[istart + 19], adsums[2])
             return arraylist
 
-        comm_world = MPI.COMM_WORLD
+        comm_world = mpi.comm
         if comm_world.Get_rank() == 0:
             df_SPs = pd.DataFrame(columns=SP_DATA_HEADER)
             for i in range(len(DataSPs.df_SPs)):

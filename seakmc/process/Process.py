@@ -4,7 +4,6 @@ import time
 import copy
 import numpy as np
 import pandas as pd
-from mpi4py import MPI
 
 import seakmc.datasps.DataKMC as dataKMC
 import seakmc.datasps.DataSPS as dataSPS
@@ -20,10 +19,11 @@ from seakmc.restart.Restart import RESTART
 from seakmc.spsearch.SaddlePoints import Data_SPs
 from seakmc.mpiconf.error_exit import error_exit
 from seakmc.process.TrialDisp2Basin import TrialDisps, TrialDisp2Basin
+from seakmc.mpiconf.context import mpi
 
 
 def run_seakmc(thissett, seakmcdata, object_dict, Eground, thisRestart):
-    comm_world = MPI.COMM_WORLD
+    comm_world = mpi.comm
     rank_world = comm_world.Get_rank()
     size_world = comm_world.Get_size()
 
@@ -312,7 +312,7 @@ def run_seakmc(thissett, seakmcdata, object_dict, Eground, thisRestart):
         '''
         MPI.Finalize()
         #MPI.Init()
-        comm_world = MPI.COMM_WORLD
+        comm_world = mpi.comm
         rank_world = comm_world.Get_rank()
         size_world = comm_world.Get_size()
         '''

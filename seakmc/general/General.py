@@ -2,13 +2,10 @@ import os
 import pandas as pd
 from monty.io import zopen
 
-from mpi4py import MPI
 
-from seakmc.runner.LammpsRunner import LammpsRunner
-from seakmc.runner.PyLammpsRunner import PyLammpsRunner
-from seakmc.runner.VaspRunner import VaspRunner
 from seakmc.input.Input import export_Keys
 from seakmc.input.Input import SP_COMPACT_HEADER, SP_COMPACT_HEADER4Delete
+from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -18,8 +15,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
 
 
 class LogWriter(object):
@@ -178,15 +173,21 @@ def object_maker(thissett, thisRestart):
                                 significant_figures=thissett.system["significant_figures"])
     object_dict['thisSummary'] = thisSummary
 
-    if thissett.force_evaluator['Style'].upper() == "VASP":
+    # Imported on selection rather than at module scope, so that installing
+    # SEAKMC does not require every backend to be present.
+    style = thissett.force_evaluator['Style'].upper()
+    if style == "VASP":
+        from seakmc.runner.VaspRunner import VaspRunner
         thisRunner = VaspRunner(thissett)
-    elif thissett.force_evaluator['Style'].upper() == "PYLAMMPS":
+    elif style == "PYLAMMPS":
+        from seakmc.runner.PyLammpsRunner import PyLammpsRunner
         thisRunner = PyLammpsRunner(thissett)
-    elif thissett.force_evaluator['Style'].upper() == "LAMMPS":
+    elif style == "LAMMPS":
+        from seakmc.runner.LammpsRunner import LammpsRunner
         thisRunner = LammpsRunner(thissett)
     else:
-        errormsg = "Unkown force_evaluator!"
-        error_exit(errormsg)
+        error_exit(f"Unknown force_evaluator Style {thissett.force_evaluator['Style']!r}; "
+                   f"expected one of VASP, PYLAMMPS, LAMMPS.")
     object_dict['force_evaluator'] = thisRunner
 
     DataOutpath = os.path.join(THIS_PATH, "DataOut")

@@ -4,10 +4,10 @@ import subprocess
 
 import numpy as np
 from monty.io import zopen
-from mpi4py import MPI
 
 from seakmc.core.data import SeakmcData
 from seakmc.input.Input import export_Keys
+from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -17,9 +17,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
 
 
 class LammpsRunner(object):
@@ -63,7 +60,7 @@ class LammpsRunner(object):
         self.this_path = os.getcwd()
         self.relative_path = "Runner_" + str(thiscolor)
 
-        if comm is None: comm = MPI.COMM_WORLD
+        if comm is None: comm = mpi.comm
         rank_local = comm.Get_rank()
         if rank_local == 0:
             self.modify_callscript(os.path.join(self.path_to_callscript, self.callscript), nproc=nproc_task)
@@ -140,7 +137,7 @@ class LammpsRunner(object):
         self.this_path = os.getcwd()
         self.relative_path = "Runner_" + str(thiscolor)
 
-        if comm is None: comm = MPI.COMM_WORLD
+        if comm is None: comm = mpi.comm
         rank_local = comm.Get_rank()
         if rank_local == 0:
             self.modify_callscript(os.path.join(self.path_to_callscript, self.callscript), nproc=nproc_task)
@@ -195,7 +192,7 @@ class LammpsRunner(object):
 
     def get_spsearch_forces(self, coords, data, thiscolor, nactive, comm=None):
         purpose = 'SPS'
-        if comm is None: comm = MPI.COMM_WORLD
+        if comm is None: comm = mpi.comm
         rank_local = comm.Get_rank()
         if rank_local == 0:
             if os.path.isfile(self.relative_path + "/tmp0.dat"): os.remove(self.relative_path + "/tmp0.dat")

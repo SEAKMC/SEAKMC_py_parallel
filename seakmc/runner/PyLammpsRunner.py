@@ -2,11 +2,10 @@ import ctypes
 import os
 
 import numpy as np
-from lammps import lammps
 from monty.io import zopen
-from mpi4py import MPI
 
 from seakmc.input.Input import export_Keys
+from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -16,9 +15,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
 
 Valid_GPU_args = ["-k", "-kokkos", "-sf", "-suffix", "-pk", "-package"]
 class PyLammpsRunner(object):
@@ -58,6 +54,8 @@ class PyLammpsRunner(object):
                             args.append(v.strip())
                 else:
                     args.append(str(val))
+        from lammps import lammps  # imported here so the package stays importable
+                                   # without a LAMMPS installation
         self.bin = lammps(cmdargs=args, comm=comm)
 
     def run_runner(self, purpose, data, thiscolor, nactive=None,
@@ -67,7 +65,7 @@ class PyLammpsRunner(object):
         self.this_path = os.getcwd()
         self.relative_path = "Runner_" + str(thiscolor)
 
-        if comm is None: comm = MPI.COMM_WORLD
+        if comm is None: comm = mpi.comm
         rank_local = comm.Get_rank()
         if rank_local == 0:
             data.to_lammps_data(self.relative_path + "/tmp0.dat", to_atom_style=True, distance=12)
@@ -107,7 +105,7 @@ class PyLammpsRunner(object):
         self.this_path = os.getcwd()
         self.relative_path = "Runner_" + str(thiscolor)
 
-        if comm is None: comm = MPI.COMM_WORLD
+        if comm is None: comm = mpi.comm
         rank_local = comm.Get_rank()
         if rank_local == 0:
             data.to_lammps_data(self.relative_path + "/tmp0.dat", to_atom_style=True, distance=12)

@@ -1,11 +1,8 @@
-from mpi4py import MPI
 
 import seakmc.mpiconf.MPIconf as mympi
+from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
 
 def data_dynamics(purpose, force_evaluator, data, ntask_tot, nactive=None, nproc_task=1, thisExports=None, **COMM_args):
     start_proc = 0
@@ -35,17 +32,17 @@ def data_dynamics(purpose, force_evaluator, data, ntask_tot, nactive=None, nproc
             isValid = None
             errormsg = None
 
-        comm_world.Barrier()
+        mpi.comm.Barrier()
 
         itask_start += ntask_time
         ntask_left = ntask_left - ntask_time
         ntask_time = min(ntask_time, ntask_left)
 
-    comm_world.Barrier()
-    Eground = comm_world.bcast(Eground, root=0)
-    relaxed_coords = comm_world.bcast(relaxed_coords, root=0)
-    isValid = comm_world.bcast(isValid, root=0)
-    errormsg = comm_world.bcast(errormsg, root=0)
+    mpi.comm.Barrier()
+    Eground = mpi.comm.bcast(Eground, root=0)
+    relaxed_coords = mpi.comm.bcast(relaxed_coords, root=0)
+    isValid = mpi.comm.bcast(isValid, root=0)
+    errormsg = mpi.comm.bcast(errormsg, root=0)
     if not isValid:
         error_exit(errormsg)
 

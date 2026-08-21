@@ -16,15 +16,15 @@ import time
 import traceback
 
 from seakmc.exceptions import SeakmcError
+from seakmc.mpiconf.context import mpi
 
 
 def _teardown(code=1):
     """End the whole job, not just this rank."""
     try:
-        from mpi4py import MPI
-        if MPI.Is_initialized() and not MPI.Is_finalized() and MPI.COMM_WORLD.Get_size() > 1:
+        if mpi.has_mpi and mpi.size > 1:
             sys.stderr.flush()
-            MPI.COMM_WORLD.Abort(code)
+            mpi.comm.Abort(code)
     except Exception:
         # No MPI, or MPI already torn down: a plain exit is correct and enough.
         pass
@@ -33,9 +33,8 @@ def _teardown(code=1):
 
 def _rank_label():
     try:
-        from mpi4py import MPI
-        if MPI.Is_initialized() and MPI.COMM_WORLD.Get_size() > 1:
-            return f" [rank {MPI.COMM_WORLD.Get_rank()}]"
+        if mpi.has_mpi and mpi.size > 1:
+            return f" [rank {mpi.rank}]"
     except Exception:
         pass
     return ""

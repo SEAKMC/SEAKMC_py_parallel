@@ -3,10 +3,10 @@ import time
 
 import numpy as np
 import pandas as pd
-from mpi4py import MPI
 
 import seakmc.mpiconf.MPIconf as mympi
 from seakmc.input.Input import SP_COMPACT_HEADER4Delete
+from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -16,9 +16,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
 
 
 def recalib_energy_single(itask_start, thiscolor, comm_split,
@@ -75,7 +72,7 @@ def recalib_energy_single(itask_start, thiscolor, comm_split,
 def recalibrate_energy(thissett, DataSPs, seakmcdata, AVitags, Eground, object_dict):
     ntask_tot = DataSPs.nSP
     nproc_task = thissett.force_evaluator['nproc4ReCal']
-    if nproc_task > size_world:
+    if nproc_task > mpi.size:
         errormsg = "Number of processors is smaller than number of processors for CalBarrsInData"
         error_exit(errormsg)
 
@@ -93,7 +90,7 @@ def recalibrate_energy(thissett, DataSPs, seakmcdata, AVitags, Eground, object_d
     LogWriter = object_dict['LogWriter']
     ReBias = thissett.saddle_point["CalEbiasInData"]
     idtasks = np.arange(DataSPs.nSP)
-    if rank_world == 0:
+    if mpi.rank == 0:
         tic = time.time()
         idens = np.array([], dtype=int)
         ids4del = np.array([], dtype=int)
@@ -115,37 +112,37 @@ def recalibrate_energy(thissett, DataSPs, seakmcdata, AVitags, Eground, object_d
             thisid4del = None
             thisreason = None
 
-        if rank_world == 0:
+        if mpi.rank == 0:
             idens = np.append(idens, [thisidens])
             ids4del = np.append(ids4del, [thisid4del])
             reasons = np.append(reasons, [thisreason])
 
             for i in range(1, ntask_time):
-                thisidens = comm_world.recv(source=i * nproc_task, tag=i * 10 + 1)
-                thisid4del = comm_world.recv(source=i * nproc_task, tag=i * 10 + 2)
-                thisreason = comm_world.recv(source=i * nproc_task, tag=i * 10 + 3)
+                thisidens = mpi.comm.recv(source=i * nproc_task, tag=i * 10 + 1)
+                thisid4del = mpi.comm.recv(source=i * nproc_task, tag=i * 10 + 2)
+                thisreason = mpi.comm.recv(source=i * nproc_task, tag=i * 10 + 3)
                 idens = np.append(idens, [thisidens])
                 ids4del = np.append(ids4del, [thisid4del])
                 reasons = np.append(reasons, [thisreason])
         else:
             if thiscolor > 0 and thiscolor < ntask_time and COMM_args["thiscomm"].Get_rank() == 0:
-                comm_world.send(thisidens, dest=0, tag=thiscolor * 10 + 1)
-                comm_world.send(thisid4del, dest=0, tag=thiscolor * 10 + 2)
-                comm_world.send(thisreason, dest=0, tag=thiscolor * 10 + 3)
+                mpi.comm.send(thisidens, dest=0, tag=thiscolor * 10 + 1)
+                mpi.comm.send(thisid4del, dest=0, tag=thiscolor * 10 + 2)
+                mpi.comm.send(thisreason, dest=0, tag=thiscolor * 10 + 3)
             else:
                 pass
 
-        comm_world.Barrier()
+        mpi.comm.Barrier()
 
         itask_start += ntask_time
         ntask_left = ntask_left - ntask_time
         ntask_time = min(ntask_time, ntask_left)
 
-    comm_world.Barrier()
+    mpi.comm.Barrier()
 
     df_delete_this = pd.DataFrame(columns=SP_COMPACT_HEADER4Delete)
     to_delete_localisp = np.array([], dtype=int)
-    if rank_world == 0:
+    if mpi.rank == 0:
         for i in range(len(idens)):
             thisidens = idens[i]
             if thisidens is not None:
@@ -181,12 +178,12 @@ def recalibrate_energy(thissett, DataSPs, seakmcdata, AVitags, Eground, object_d
         DataSPs = None
         df_delete_this = None
 
-    DataSPs = comm_world.bcast(DataSPs, root=0)
-    df_delete_this = comm_world.bcast(df_delete_this, root=0)
+    DataSPs = mpi.comm.bcast(DataSPs, root=0)
+    df_delete_this = mpi.comm.bcast(df_delete_this, root=0)
 
     force_evaluator.close()
     if COMM_args["isSplit"]:
         COMM_args["thiscomm"].Free()
-    comm_world.Barrier()
+    mpi.comm.Barrier()
 
     return DataSPs, df_delete_this

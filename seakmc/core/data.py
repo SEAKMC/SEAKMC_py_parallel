@@ -10,7 +10,6 @@ import pandas as pd
 import copy
 from typing import Optional, Tuple
 from monty.json import MSONable
-from mpi4py import MPI
 
 from pymatgen.core.periodic_table import Element
 from pymatgen.core.lattice import Lattice
@@ -23,6 +22,7 @@ from pymatgen.symmetry.analyzer import (
 from seakmc.input.Input import Global_Variables
 from seakmc.core.util import mat_lengths, mat_angles, mat_mag, generate_rotation_matrix
 import seakmc.mpiconf.MPIconf as mympi
+from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -32,9 +32,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
 
 DispSettKEY = ["Selection", "Range", "Operation", "Values"]
 EntryKEY = ["type", "id", "x", "y", "z", "dxy", "dxz", "dyz", "dxyz"]
@@ -469,21 +466,21 @@ class SeakmcData(LammpsData, MSONable):
         for i in range(len(group_info[0])):
             idc_reverse[group_info[0][i]] = i
 
-        n_rank, rank_last, n_rank_last = mympi.get_proc_partition(nReal, size_world,
+        n_rank, rank_last, n_rank_last = mympi.get_proc_partition(nReal, mpi.size,
                                                                   nmin_rank=self.sett.active_volume["NMin_perproc"])
-        comm_world.Barrier()
+        mpi.comm.Barrier()
 
-        if rank_world < rank_last:
-            nrstart = rank_world * n_rank
+        if mpi.rank < rank_last:
+            nrstart = mpi.rank * n_rank
             nrend = nrstart + n_rank
-        elif rank_world == rank_last:
-            nrstart = rank_world * n_rank
+        elif mpi.rank == rank_last:
+            nrstart = mpi.rank * n_rank
             nrend = nrstart + n_rank_last
         else:
             nrstart = nReal
             nrend = nrstart
 
-        if rank_world <= rank_last and nrend > nrstart:
+        if mpi.rank <= rank_last and nrend > nrstart:
             nnlist_local = [[] for _ in range(nlist)]
         else:
             nnlist_local = None
@@ -511,9 +508,9 @@ class SeakmcData(LammpsData, MSONable):
                     else:
                         nnlist_local[icut].append(np.array([], dtype=atomdtype))
 
-        comm_world.Barrier()
+        mpi.comm.Barrier()
 
-        nnlist_local = comm_world.allgather(nnlist_local)
+        nnlist_local = mpi.comm.allgather(nnlist_local)
         nnlist = [[] for _ in range(nlist)]
         for irank in range(len(nnlist_local)):
             if nnlist_local[irank] is not None:
@@ -637,15 +634,15 @@ class SeakmcData(LammpsData, MSONable):
             for i in range(len(group_info[0])):
                 idc_reverse[group_info[0][i]] = i
 
-            n_rank, rank_last, n_rank_last = mympi.get_proc_partition(nind0s, size_world,
+            n_rank, rank_last, n_rank_last = mympi.get_proc_partition(nind0s, mpi.size,
                                                                       nmin_rank=self.sett.active_volume["NMin_perproc"])
-            comm_world.Barrier()
+            mpi.comm.Barrier()
 
-            if rank_world < rank_last:
-                nrstart = rank_world * n_rank
+            if mpi.rank < rank_last:
+                nrstart = mpi.rank * n_rank
                 nrend = nrstart + n_rank
-            elif rank_world == rank_last:
-                nrstart = rank_world * n_rank
+            elif mpi.rank == rank_last:
+                nrstart = mpi.rank * n_rank
                 nrend = nrstart + n_rank_last
             else:
                 nrstart = nind0s
@@ -747,10 +744,10 @@ class SeakmcData(LammpsData, MSONable):
                     defect_list.append(atoms_ghost_array[nr])
                     dCN_list.append(thisdCN)
 
-            comm_world.Barrier()
+            mpi.comm.Barrier()
 
-            defect_list = comm_world.allreduce(defect_list)
-            dCN_list = comm_world.allreduce(dCN_list)
+            defect_list = mpi.comm.allreduce(defect_list)
+            dCN_list = mpi.comm.allreduce(dCN_list)
         return defect_list, dCN_list
 
     def WS_find_defects(self):
@@ -780,15 +777,15 @@ class SeakmcData(LammpsData, MSONable):
         for i in range(len(ref_info[0])):
             idc_reverse[ref_info[0][i]] = i
 
-        n_rank, rank_last, n_rank_last = mympi.get_proc_partition(refdata.natoms, size_world,
+        n_rank, rank_last, n_rank_last = mympi.get_proc_partition(refdata.natoms, mpi.size,
                                                                   nmin_rank=self.sett.active_volume["NMin_perproc"])
-        comm_world.Barrier()
+        mpi.comm.Barrier()
 
-        if rank_world < rank_last:
-            nrstart = rank_world * n_rank
+        if mpi.rank < rank_last:
+            nrstart = mpi.rank * n_rank
             nrend = nrstart + n_rank
-        elif rank_world == rank_last:
-            nrstart = rank_world * n_rank
+        elif mpi.rank == rank_last:
+            nrstart = mpi.rank * n_rank
             nrend = nrstart + n_rank_last
         else:
             nrstart = refdata.natoms
@@ -797,9 +794,9 @@ class SeakmcData(LammpsData, MSONable):
         tv = np.zeros(refdata.natoms, dtype=int)
         ti = np.zeros(self.natoms, dtype=int)
         tt = np.ones(self.natoms, dtype=int)
-        tv_rec = np.empty([size_world, refdata.natoms], dtype=int)
-        ti_rec = np.empty([size_world, self.natoms], dtype=int)
-        tt_rec = np.empty([size_world, self.natoms], dtype=int)
+        tv_rec = np.empty([mpi.size, refdata.natoms], dtype=int)
+        ti_rec = np.empty([mpi.size, self.natoms], dtype=int)
+        tt_rec = np.empty([mpi.size, self.natoms], dtype=int)
         for nr in range(nrstart, nrend):
             thisidmol = refdata.atoms.iloc[nr]["molecule-ID"]
             ismolid = True
@@ -834,10 +831,10 @@ class SeakmcData(LammpsData, MSONable):
                         if typej != thistype:
                             tt[jj] = 0
 
-        comm_world.Barrier()
-        comm_world.Allgather(tv, tv_rec)
-        comm_world.Allgather(ti, ti_rec)
-        comm_world.Allgather(tt, tt_rec)
+        mpi.comm.Barrier()
+        mpi.comm.Allgather(tv, tv_rec)
+        mpi.comm.Allgather(ti, ti_rec)
+        mpi.comm.Allgather(tt, tt_rec)
 
         tv = tv_rec.max(axis=0)
         ti = ti_rec.max(axis=0)
@@ -1272,7 +1269,7 @@ class SeakmcData(LammpsData, MSONable):
             logstr = "No defect has been found!"
             error_exit(logstr)
 
-        if rank_world == 0:
+        if mpi.rank == 0:
             logstr = f"There are {self.ndefects} defects before the point defect reduction."
             LogWriter.write_data(logstr)
         if self.sett.active_volume['PDReduction']:
@@ -1289,7 +1286,7 @@ class SeakmcData(LammpsData, MSONable):
                                                                Overlapping=True,
                                                                Exclusive=True)
             self.ndefects = len(self.defects)
-            if rank_world == 0:
+            if mpi.rank == 0:
                 logstr = f"There are {self.ndefects} defects after the point defect reduction."
                 LogWriter.write_data(logstr)
         else:
@@ -1763,14 +1760,14 @@ class SeakmcData(LammpsData, MSONable):
             idc_reverse[group_info[0][i]] = i
             #itags = self.atoms["itag"].to_numpy().astype(int)
 
-        comm_world.Barrier()
+        mpi.comm.Barrier()
         ntask_tot = idavs.shape[0]
         ntask_left = ntask_tot
-        ntask_time = min(ntask_left, size_world)
+        ntask_time = min(ntask_left, mpi.size)
         itask_start = 0
         idmols = np.zeros(newdata.natoms, dtype=int)
         while ntask_left > 0:
-            nd = itask_start + rank_world
+            nd = itask_start + mpi.rank
             if nd < ntask_tot:
                 idf = idavs[nd]
                 idmols_local = np.zeros(newdata.natoms, dtype=int)
@@ -1804,15 +1801,16 @@ class SeakmcData(LammpsData, MSONable):
             else:
                 idmols_local = np.zeros(newdata.natoms, dtype=int)
 
-            comm_world.Barrier()
+            mpi.comm.Barrier()
             itask_start += ntask_time
             ntask_left = ntask_left - ntask_time
             ntask_time = min(ntask_time, ntask_left)
             idmols_this = np.empty(newdata.natoms, dtype=int)
-            comm_world.Allreduce(idmols_local, idmols_this, op=MPI.SUM)
+            from mpi4py import MPI  # only reached under a real MPI run
+            mpi.comm.Allreduce(idmols_local, idmols_this, op=MPI.SUM)
             idmols += idmols_this
 
-        if rank_world == 0:
+        if mpi.rank == 0:
             newdata.atoms = newdata.atoms.drop(["molecule-ID"], axis=1)
             im = ATOMS_HEADERS[self.atom_style].index('molecule-ID')
             newdata.atoms.insert(im, 'molecule-ID', idmols)
@@ -1838,7 +1836,7 @@ class SeakmcData(LammpsData, MSONable):
                 masks = masksa.copy()
             return masks.astype(int)
 
-        if rank_world == 0:
+        if mpi.rank == 0:
             atoms = self.atoms.copy()
             atoms = atoms[ATOMS_HEADERS[self.atom_style]]
             newdata = SeakmcData(self.box, self.masses, atoms, force_field=self.force_field, topology=self.topology,
@@ -1916,7 +1914,7 @@ class SeakmcData(LammpsData, MSONable):
 
     def Write_Stack_SPs(self, SPlist, AVitags, fileheader, OutPath=False, rdcut4vis=0.01, dcut4vis=0.01, DispStyle="SP",
                         Invisible=True, Reset_Index=False):
-        if rank_world == 0:
+        if mpi.rank == 0:
             extra_cols = ["tag", "isp", "idv"]
             DispStyles = ["SPs", "FIs"]
             if DispStyle[0:2].upper() == "FI":
@@ -1998,13 +1996,13 @@ class SeakmcData(LammpsData, MSONable):
             istart = 0
             iend = 2
         for m in range(istart, iend):
-            comm_world.Barrier()
+            mpi.comm.Barrier()
             ntask_tot = len(SPlist)
             ntask_left = ntask_tot
-            ntask_time = min(ntask_left, size_world)
+            ntask_time = min(ntask_left, mpi.size)
             itask_start = 0
             while ntask_left > 0:
-                i = itask_start + rank_world
+                i = itask_start + mpi.rank
                 if i < ntask_tot:
                     thisdata = copy.deepcopy(self)
                     if m == 1:
@@ -2025,7 +2023,7 @@ class SeakmcData(LammpsData, MSONable):
                     thisdata.to_lammps_data(filename, to_atom_style=True,
                                             distance=self.sett.system["significant_figures"])
 
-                comm_world.Barrier()
+                mpi.comm.Barrier()
                 itask_start += ntask_time
                 ntask_left = ntask_left - ntask_time
                 ntask_time = min(ntask_time, ntask_left)
@@ -2033,7 +2031,7 @@ class SeakmcData(LammpsData, MSONable):
 
     def Write_Stack_SPs_from_DataSPs(self, iselSPs, DataSPs, AVitags, fileheader, OutPath=False, rdcut4vis=0.01,
                                      dcut4vis=0.01, DispStyle="SP", Invisible=True, Reset_Index=False):
-        if rank_world == 0:
+        if mpi.rank == 0:
             extra_cols = ["tag", "isp", "idv"]
             DispStyles = ["SPs", "FIs"]
             if DispStyle[0:2].upper() == "FI":
@@ -2120,13 +2118,13 @@ class SeakmcData(LammpsData, MSONable):
             istart = 0
             iend = 2
         for m in range(istart, iend):
-            comm_world.Barrier()
+            mpi.comm.Barrier()
             ntask_tot = len(iselSPs)
             ntask_left = ntask_tot
-            ntask_time = min(ntask_left, size_world)
+            ntask_time = min(ntask_left, mpi.size)
             itask_start = 0
             while ntask_left > 0:
-                i = itask_start + rank_world
+                i = itask_start + mpi.rank
                 if i < ntask_tot:
                     isp = iselSPs[i]
                     iavlocal = DataSPs.localiav[isp]
@@ -2150,7 +2148,7 @@ class SeakmcData(LammpsData, MSONable):
                     thisdata.to_lammps_data(filename, to_atom_style=True,
                                             distance=self.sett.system["significant_figures"])
 
-                comm_world.Barrier()
+                mpi.comm.Barrier()
                 itask_start += ntask_time
                 ntask_left = ntask_left - ntask_time
                 ntask_time = min(ntask_time, ntask_left)
@@ -2487,7 +2485,7 @@ class ActiveVolume(SeakmcData, MSONable):
         return self.__str__()
 
     def Write_AV(self, filename, Fixed=False):
-        if rank_world == 0:
+        if mpi.rank == 0:
             newAV = copy.deepcopy(self)
             if not Fixed:
                 inds = np.arange(newAV.nactive, dtype=int)
@@ -2577,7 +2575,7 @@ class ActiveVolume(SeakmcData, MSONable):
             pass
 
     def estimate_atom_strain(self, thissett, nactive=None, nbuffer=None, comm=None):
-        if comm is None: comm = MPI.COMM_WORLD
+        if comm is None: comm = mpi.comm
         size_this = comm.Get_size()
         rank_this = comm.Get_rank()
 
@@ -2805,7 +2803,7 @@ class ActiveVolume(SeakmcData, MSONable):
 
     def Write_Stack_avSPs(self, SPlist, fileheader, OutPath=False, rdcut4vis=0.01, dcut4vis=0.01, DispStyle="SP",
                         Invisible=True, Reset_Index=False):
-        if rank_world == 0:
+        if mpi.rank == 0:
             extra_cols = ["tag", "isp", "idv"]
             DispStyles = ["SPs", "FIs"]
             if DispStyle[0:2].upper() == "FI":
@@ -2867,11 +2865,11 @@ class ActiveVolume(SeakmcData, MSONable):
                 filename = fileheader + DispStyles[m] + ".dat"
                 if isinstance(OutPath, str): filename = os.path.join(OutPath, filename)
                 newdata.to_lammps_data(filename, to_atom_style=False, distance=self.sett.system["significant_figures"])
-        comm_world.Barrier()
+        mpi.comm.Barrier()
 
     def Write_Sep_avSPs(self, SPlist, fileheader, OutPath=False, DispStyle="SP",
                           Invisible=True, Reset_Index=False):
-        if rank_world == 0:
+        if mpi.rank == 0:
             if DispStyle[0:2].upper() == "FI":
                 istart = 1
                 iend = 2
@@ -2907,7 +2905,7 @@ class ActiveVolume(SeakmcData, MSONable):
                     if isinstance(OutPath, str): filename = os.path.join(OutPath, filename)
                     thisdata.to_lammps_data(filename, to_atom_style=False,
                                             distance=self.sett.system["significant_figures"])
-        comm_world.Barrier()
+        mpi.comm.Barrier()
 
 
 

@@ -4,10 +4,10 @@ import numpy as np
 from numpy import pi
 from enum import IntEnum
 
-from mpi4py import MPI
 
 from pymatgen.core.periodic_table import Element
 from pymatgen.core.bonds import obtain_all_bond_lengths
+from seakmc.mpiconf.context import mpi, default_nproc_task
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -16,16 +16,6 @@ __version__ = "1.0"
 __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
-
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
-n = int(np.log(size_world) / np.log(2))
-nleft = size_world - int(np.power(2, n))
-if n >= 4 and nleft >= np.power(2, n - 1):
-    nproc_this = int(np.power(2, n - 1) * 3)
-else:
-    nproc_this = int(np.power(2, n))
 
 NDISPARRAY = 3
 SEQUENCE_DISPARRAY = ["SP", "FS", "FI"]
@@ -314,16 +304,16 @@ class Settings:
             thisfeval["OutFileHeaders"] = []
 
         if not isinstance(thisfeval["nproc"], int):
-            thisfeval["nproc"] = nproc_this
+            thisfeval["nproc"] = default_nproc_task()
 
         if not isinstance(thisfeval["nproc4ReCal"], int):
-            thisfeval["nproc4ReCal"] = nproc_this
+            thisfeval["nproc4ReCal"] = default_nproc_task()
 
-        if thisfeval["nproc"] > size_world:
+        if thisfeval["nproc"] > mpi.size:
             logstr = "nproc must be smaller than the number of MPI ranks!"
             error_exit(logstr)
 
-        if thisfeval["nproc4ReCal"] > size_world:
+        if thisfeval["nproc4ReCal"] > mpi.size:
             logstr = "nproc4ReCal must be smaller than the number of MPI ranks!"
             error_exit(logstr)
 
@@ -716,7 +706,7 @@ class Settings:
                     thisspsearch[key][subkey] = spsearch[key][subkey]
             else:
                 thisspsearch[key] = spsearch[key]
-        if thisspsearch["force_evaluator"]["nproc"] > size_world:
+        if thisspsearch["force_evaluator"]["nproc"] > mpi.size:
             logstr = "nproc for saddle point search must be no larger than the number of MPI ranks!"
             error_exit(logstr)
         thisspsearch["RatioStepsize"] = thisspsearch["MaxStepsize"] / thisspsearch["TrialStepsize"]
@@ -882,7 +872,7 @@ class Settings:
 
     def validate_input(self):
         if self.force_evaluator["Style"].upper() == "VASP":
-            if rank_world == 0:
+            if mpi.rank == 0:
                 logstr = f"The binary file for VASP style is 'callvasp', which is a submission script!"
                 logstr += "\n" + f"Use the absolute path in 'Path2Pot' in potential!"
                 logstr += "\n" + f"INCAR files should be provided for the correspond places with the header 'Rinput'!"
@@ -897,7 +887,7 @@ class Settings:
 
         KB = 8.617333262145e-5
         if self.force_evaluator["TrialDisps2Basin"]["TrialDisps2Basin"]:
-            if rank_world == 0:
+            if mpi.rank == 0:
                 disps = np.array(self.force_evaluator['TrialDisps2Basin']['Disps'])
                 strains = np.divide(disps, self.force_evaluator['TrialDisps2Basin']['Ref_Length'])
                 Target_StrainRate = self.force_evaluator['TrialDisps2Basin']['Target_StrainRate']
@@ -973,7 +963,7 @@ class Settings:
             error_exit(logstr)
 
         if self.saddle_point["BarrierCut"] > 10.0:
-            if rank_world == 0:
+            if mpi.rank == 0:
                 logstr = f"Warning: The BarrierCut in saddle_point is larger than 10 eV!"
                 logstr += "\n" + "This vibrational rate may be considered as 0.0 in code."
                 logstr += ("\n" +

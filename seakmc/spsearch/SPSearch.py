@@ -7,11 +7,11 @@ import shutil
 import numpy as np
 import pandas as pd
 import scipy.linalg
-from mpi4py import MPI
 from numpy import pi
 
 from seakmc.core.util import mats_angle, mats_sum_mul, mat_mag, mat_unit, sigmoid_function
 from seakmc.dynmat.Dynmat import DynMat, VibMat, VibMats
+from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -21,9 +21,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
 
 
 class SPSearch:
@@ -61,7 +58,7 @@ class SPSearch:
                 error_exit(errormsg)
         self.pre_disps = np.array(pre_disps)
         self.apply_mass = apply_mass
-        if comm is None: comm = MPI.COMM_WORLD
+        if comm is None: comm = mpi.comm
         self.comm = comm
         self.rank_this = self.comm.Get_rank()
         self.size_this = self.comm.Get_size()

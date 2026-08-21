@@ -2,7 +2,8 @@ import copy
 import time
 
 import numpy as np
-from mpi4py import MPI
+
+from seakmc.mpiconf.context import mpi
 
 import seakmc.datasps.PostSPS as postSPS
 import seakmc.datasps.PreSPS as preSPS
@@ -19,9 +20,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
 
 
 def AV_is_done(idav, iav, idsps, ticav_l, thisAV_l, AVstring_l, thisSPS_l,
@@ -84,6 +82,7 @@ def master_data_SPS(ntask_tot, nproc_task, ntask_time,
                     DataSPs, AVitags, df_delete_SPs, undo_idavs, finished_AVs, simulation_time, this_idavs,
                     istep, thissett, seakmcdata, DefectBank_list, thisSuperBasin, Eground,
                     DFWriter, object_dict):
+    from mpi4py import MPI  # master/slave dispatch is MPI-only
     status = MPI.Status()
     LogWriter = object_dict['LogWriter']
     float_precision = thissett.system['float_precision']
@@ -114,7 +113,7 @@ def master_data_SPS(ntask_tot, nproc_task, ntask_time,
     completed_spsearchs_AV = np.zeros(navs, dtype=int)
     working_jobs = []
     while completed_tasks < ntask_tot:
-        idtask = comm_world.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+        idtask = mpi.comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
         s = status.Get_source()
         tag = status.Get_tag()
         thiscolor = int((s - 1) / nproc_task)
@@ -125,20 +124,20 @@ def master_data_SPS(ntask_tot, nproc_task, ntask_time,
                 idav = this_idavs[iav]
                 idsps = idtask % thissett.spsearch["NSearch"]
 
-                isVisit_this = comm_world.recv(source=s, tag=51)
-                AVstring_l[iav] += comm_world.recv(source=s, tag=52)
-                thisSP = comm_world.recv(source=s, tag=53)
-                thisVN = comm_world.recv(source=s, tag=54)
-                time_spsearch = comm_world.recv(source=s, tag=55)
-                ntsiter = comm_world.recv(source=s, tag=56)
+                isVisit_this = mpi.comm.recv(source=s, tag=51)
+                AVstring_l[iav] += mpi.comm.recv(source=s, tag=52)
+                thisSP = mpi.comm.recv(source=s, tag=53)
+                thisVN = mpi.comm.recv(source=s, tag=54)
+                time_spsearch = mpi.comm.recv(source=s, tag=55)
+                ntsiter = mpi.comm.recv(source=s, tag=56)
                 if not isVisit_this:
-                    Pre_Disps_l[iav] = comm_world.recv(source=s, tag=57)
-                    isRecycled_l[iav] = comm_world.recv(source=s, tag=58)
-                    isPGSYMM_l[iav] = comm_world.recv(source=s, tag=59)
-                    thisSOPs_l[iav] = comm_world.recv(source=s, tag=60)
-                    SNC_l[iav] = comm_world.recv(source=s, tag=61)
-                    CalPref_l[iav] = comm_world.recv(source=s, tag=62)
-                    isDynmat_l[iav] = comm_world.recv(source=s, tag=63)
+                    Pre_Disps_l[iav] = mpi.comm.recv(source=s, tag=57)
+                    isRecycled_l[iav] = mpi.comm.recv(source=s, tag=58)
+                    isPGSYMM_l[iav] = mpi.comm.recv(source=s, tag=59)
+                    thisSOPs_l[iav] = mpi.comm.recv(source=s, tag=60)
+                    SNC_l[iav] = mpi.comm.recv(source=s, tag=61)
+                    CalPref_l[iav] = mpi.comm.recv(source=s, tag=62)
+                    isDynmat_l[iav] = mpi.comm.recv(source=s, tag=63)
 
                 if thisVN is not None:
                     if len(thisVN) > 0 and len(thisVNS_l[iav]) <= thissett.spsearch["HandleVN"]["NMaxRandVN"]:
@@ -248,30 +247,30 @@ def master_data_SPS(ntask_tot, nproc_task, ntask_time,
 
                         thisAV_l[iav] = thisAV
 
-                    comm_world.send(idtask, dest=s, tag=MPI_Tags.START)
-                    comm_world.send(isVisit_this, dest=s, tag=11)
-                    comm_world.send(thisAV_l[iav], dest=s, tag=12)
-                    comm_world.send(thisSPS_l[iav], dest=s, tag=13)
-                    comm_world.send(thisVNS_l[iav], dest=s, tag=14)
-                    comm_world.send(Pre_Disps_l[iav], dest=s, tag=15)
-                    comm_world.send(isRecycled_l[iav], dest=s, tag=16)
-                    comm_world.send(isPGSYMM_l[iav], dest=s, tag=17)
-                    comm_world.send(thisSOPs_l[iav], dest=s, tag=18)
-                    comm_world.send(SNC_l[iav], dest=s, tag=19)
-                    comm_world.send(CalPref_l[iav], dest=s, tag=20)
-                    comm_world.send(isDynmat_l[iav], dest=s, tag=21)
+                    mpi.comm.send(idtask, dest=s, tag=MPI_Tags.START)
+                    mpi.comm.send(isVisit_this, dest=s, tag=11)
+                    mpi.comm.send(thisAV_l[iav], dest=s, tag=12)
+                    mpi.comm.send(thisSPS_l[iav], dest=s, tag=13)
+                    mpi.comm.send(thisVNS_l[iav], dest=s, tag=14)
+                    mpi.comm.send(Pre_Disps_l[iav], dest=s, tag=15)
+                    mpi.comm.send(isRecycled_l[iav], dest=s, tag=16)
+                    mpi.comm.send(isPGSYMM_l[iav], dest=s, tag=17)
+                    mpi.comm.send(thisSOPs_l[iav], dest=s, tag=18)
+                    mpi.comm.send(SNC_l[iav], dest=s, tag=19)
+                    mpi.comm.send(CalPref_l[iav], dest=s, tag=20)
+                    mpi.comm.send(isDynmat_l[iav], dest=s, tag=21)
 
                     if task_index > 0 and task_index % ntask_time * 4 == 0:
                         ai = np.argwhere(completed_avs == True)
                         bi = np.argwhere(isDynmat_l == True)
                         to_delete_iavs = np.intersect1d(ai, bi)
-                        comm_world.send(to_delete_iavs, dest=s, tag=22)
+                        mpi.comm.send(to_delete_iavs, dest=s, tag=22)
                     else:
-                        comm_world.send(np.array([], dtype=int), dest=s, tag=22)
+                        mpi.comm.send(np.array([], dtype=int), dest=s, tag=22)
                     working_jobs.append(thiscolor)
                     task_index += 1
                 else:
-                    comm_world.send(None, dest=s, tag=MPI_Tags.EXIT)
+                    mpi.comm.send(None, dest=s, tag=MPI_Tags.EXIT)
             elif tag == MPI_Tags.EXIT:
                 completed_tasks += 1
 
@@ -281,26 +280,27 @@ def master_data_SPS(ntask_tot, nproc_task, ntask_time,
 def slave_data_SPS(nproc_task, thiscolor, comm_split,
                    this_idavs, istep, thissett, DefectBank_list, dynmatAV_l,
                    object_dict):
+    from mpi4py import MPI  # master/slave dispatch is MPI-only
     status = MPI.Status()
     rank_local = comm_split.Get_rank()
     while True:
         if rank_local == 0:
-            comm_world.send(None, dest=0, tag=MPI_Tags.READY)
-            idtask = comm_world.recv(source=0, tag=MPI.ANY_TAG, status=status)
+            mpi.comm.send(None, dest=0, tag=MPI_Tags.READY)
+            idtask = mpi.comm.recv(source=0, tag=MPI.ANY_TAG, status=status)
             tag = status.Get_tag()
             if tag == MPI_Tags.START:
-                isVisit_this = comm_world.recv(source=0, tag=11)
-                thisAV = comm_world.recv(source=0, tag=12)
-                thisSPS = comm_world.recv(source=0, tag=13)
-                thisVNS = comm_world.recv(source=0, tag=14)
-                Pre_Disps = comm_world.recv(source=0, tag=15)
-                isRecycled = comm_world.recv(source=0, tag=16)
-                isPGSYMM = comm_world.recv(source=0, tag=17)
-                thisSOPs = comm_world.recv(source=0, tag=18)
-                SNC = comm_world.recv(source=0, tag=19)
-                CalPref = comm_world.recv(source=0, tag=20)
-                isDynmat = comm_world.recv(source=0, tag=21)
-                to_delete_iavs = comm_world.recv(source=0, tag=22)
+                isVisit_this = mpi.comm.recv(source=0, tag=11)
+                thisAV = mpi.comm.recv(source=0, tag=12)
+                thisSPS = mpi.comm.recv(source=0, tag=13)
+                thisVNS = mpi.comm.recv(source=0, tag=14)
+                Pre_Disps = mpi.comm.recv(source=0, tag=15)
+                isRecycled = mpi.comm.recv(source=0, tag=16)
+                isPGSYMM = mpi.comm.recv(source=0, tag=17)
+                thisSOPs = mpi.comm.recv(source=0, tag=18)
+                SNC = mpi.comm.recv(source=0, tag=19)
+                CalPref = mpi.comm.recv(source=0, tag=20)
+                isDynmat = mpi.comm.recv(source=0, tag=21)
+                to_delete_iavs = mpi.comm.recv(source=0, tag=22)
             else:
                 isVisit_this = None
                 thisAV = None
@@ -403,27 +403,27 @@ def slave_data_SPS(nproc_task, thiscolor, comm_split,
                     #dynmatAV=None
 
             if rank_local == 0:
-                comm_world.send(idtask, dest=0, tag=MPI_Tags.DONE)
-                comm_world.send(isVisit_this, dest=0, tag=51)
-                comm_world.send(AVstring, dest=0, tag=52)
-                comm_world.send(thisSP, dest=0, tag=53)
-                comm_world.send(thisVN, dest=0, tag=54)
-                comm_world.send(time_spsearch, dest=0, tag=55)
-                comm_world.send(ntsiter, dest=0, tag=56)
+                mpi.comm.send(idtask, dest=0, tag=MPI_Tags.DONE)
+                mpi.comm.send(isVisit_this, dest=0, tag=51)
+                mpi.comm.send(AVstring, dest=0, tag=52)
+                mpi.comm.send(thisSP, dest=0, tag=53)
+                mpi.comm.send(thisVN, dest=0, tag=54)
+                mpi.comm.send(time_spsearch, dest=0, tag=55)
+                mpi.comm.send(ntsiter, dest=0, tag=56)
                 if not isVisit_this:
-                    comm_world.send(Pre_Disps, dest=0, tag=57)
-                    comm_world.send(isRecycled, dest=0, tag=58)
-                    comm_world.send(isPGSYMM, dest=0, tag=59)
-                    comm_world.send(thisSOPs, dest=0, tag=60)
-                    comm_world.send(SNC, dest=0, tag=61)
-                    comm_world.send(CalPref, dest=0, tag=62)
-                    comm_world.send(isDynmat, dest=0, tag=63)
+                    mpi.comm.send(Pre_Disps, dest=0, tag=57)
+                    mpi.comm.send(isRecycled, dest=0, tag=58)
+                    mpi.comm.send(isPGSYMM, dest=0, tag=59)
+                    mpi.comm.send(thisSOPs, dest=0, tag=60)
+                    mpi.comm.send(SNC, dest=0, tag=61)
+                    mpi.comm.send(CalPref, dest=0, tag=62)
+                    mpi.comm.send(isDynmat, dest=0, tag=63)
             else:
                 pass
         elif tag == MPI_Tags.EXIT:
             break
 
-    if rank_local == 0: comm_world.send(None, dest=0, tag=MPI_Tags.EXIT)
+    if rank_local == 0: mpi.comm.send(None, dest=0, tag=MPI_Tags.EXIT)
 
 
 def data_SPS_parrallel(nproc_task, start_proc, ntask_time, thiscolor, comm_split,
@@ -435,7 +435,7 @@ def data_SPS_parrallel(nproc_task, start_proc, ntask_time, thiscolor, comm_split
     this_idavs = copy.deepcopy(undo_idavs)
 
     dynmatAV_l = [None] * len(undo_idavs)
-    if rank_world == 0:
+    if mpi.rank == 0:
         DataSPs, AVitags, df_delete_SPs = master_data_SPS(ntask_tot, nproc_task, ntask_time,
                                                           DataSPs, AVitags, df_delete_SPs, undo_idavs, finished_AVs,
                                                           simulation_time, this_idavs,
@@ -456,7 +456,7 @@ def data_SPS_parrallel(nproc_task, start_proc, ntask_time, thiscolor, comm_split
     dynmatAV = None
     dynmatAV_l = None
 
-    comm_world.Barrier()
+    mpi.comm.Barrier()
 
     return DataSPs, AVitags, df_delete_SPs
 
@@ -622,7 +622,7 @@ def data_SPS_no_master_slave(nproc_task, start_proc, ntask_time, thiscolor, comm
 
                 if thiscolor > 0 and rank_local == 0:
                     Send_Results(thiscolor, iav, idav, idsps, thisSP, thisVN, time_spsearch, ntsiter, isSend[thiscolor],
-                                 comm_world, *OptResults)
+                                 mpi.comm, *OptResults)
             else:
                 if thisAV_l[iav] is not None:
                     if isDynmat_l[iav] and dynmatAV_l[iav] is None:
@@ -658,7 +658,7 @@ def data_SPS_no_master_slave(nproc_task, start_proc, ntask_time, thiscolor, comm
                     OptResults = []
 
                 if thiscolor > 0 and rank_local == 0:
-                    Send_Results(thiscolor, iav, idav, idsps, thisSP, thisVN, time_spsearch, ntsiter, False, comm_world,
+                    Send_Results(thiscolor, iav, idav, idsps, thisSP, thisVN, time_spsearch, ntsiter, False, mpi.comm,
                                  *OptResults)
         else:
             thisSP = None
@@ -666,7 +666,7 @@ def data_SPS_no_master_slave(nproc_task, start_proc, ntask_time, thiscolor, comm
             time_spsearch = None
             ntsiter = None
 
-        if rank_world == 0:
+        if mpi.rank == 0:
             if task_index % thissett.system['Interval4ShowProgress'] == 0:
                 logstr = f"Processing the {idtask} task - idav: {idav} idsps: {idsps}."
                 LogWriter.write_data(logstr)
@@ -748,29 +748,29 @@ def data_SPS_no_master_slave(nproc_task, start_proc, ntask_time, thiscolor, comm
 
             for i in range(1, ntask_time):
                 itag = i * 100
-                color_rec = comm_world.recv(source=i * nproc_task, tag=itag + 1)
-                iav = comm_world.recv(source=i * nproc_task, tag=itag + 2)
-                idav = comm_world.recv(source=i * nproc_task, tag=itag + 3)
-                idsps = comm_world.recv(source=i * nproc_task, tag=itag + 4)
-                thisSP = comm_world.recv(source=i * nproc_task, tag=itag + 5)
-                thisVN = comm_world.recv(source=i * nproc_task, tag=itag + 6)
-                time_spsearch = comm_world.recv(source=i * nproc_task, tag=itag + 7)
-                ntsiter = comm_world.recv(source=i * nproc_task, tag=itag + 8)
-                isSendOpt = comm_world.recv(source=i * nproc_task, tag=itag + 9)
+                color_rec = mpi.comm.recv(source=i * nproc_task, tag=itag + 1)
+                iav = mpi.comm.recv(source=i * nproc_task, tag=itag + 2)
+                idav = mpi.comm.recv(source=i * nproc_task, tag=itag + 3)
+                idsps = mpi.comm.recv(source=i * nproc_task, tag=itag + 4)
+                thisSP = mpi.comm.recv(source=i * nproc_task, tag=itag + 5)
+                thisVN = mpi.comm.recv(source=i * nproc_task, tag=itag + 6)
+                time_spsearch = mpi.comm.recv(source=i * nproc_task, tag=itag + 7)
+                ntsiter = mpi.comm.recv(source=i * nproc_task, tag=itag + 8)
+                isSendOpt = mpi.comm.recv(source=i * nproc_task, tag=itag + 9)
                 if isSendOpt:
-                    thisAV_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 10)
-                    AVstring = comm_world.recv(source=i * nproc_task, tag=itag + 11)
-                    ticav_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 12)
-                    thisSPS_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 13)
-                    local_coords_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 14)
-                    Pre_Disps_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 15)
-                    isRecycled_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 16)
-                    isPGSYMM_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 17)
-                    thisSOPs_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 18)
-                    SNC_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 19)
-                    CalPref_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 20)
-                    isDynmat_l[iav] = comm_world.recv(source=i * nproc_task, tag=itag + 21)
-                    thisAVitags = comm_world.recv(source=i * nproc_task, tag=itag + 22)
+                    thisAV_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 10)
+                    AVstring = mpi.comm.recv(source=i * nproc_task, tag=itag + 11)
+                    ticav_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 12)
+                    thisSPS_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 13)
+                    local_coords_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 14)
+                    Pre_Disps_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 15)
+                    isRecycled_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 16)
+                    isPGSYMM_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 17)
+                    thisSOPs_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 18)
+                    SNC_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 19)
+                    CalPref_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 20)
+                    isDynmat_l[iav] = mpi.comm.recv(source=i * nproc_task, tag=itag + 21)
+                    thisAVitags = mpi.comm.recv(source=i * nproc_task, tag=itag + 22)
                     thisVNS_l[iav] = []
                     if len(AVstring_head_l[iav]) > 10:
                         pass
@@ -836,23 +836,23 @@ def data_SPS_no_master_slave(nproc_task, start_proc, ntask_time, thiscolor, comm
         else:
             pass
 
-        comm_world.Barrier()
+        mpi.comm.Barrier()
 
-        isVisit = comm_world.bcast(isVisit, root=0)
-        thisAV_l = comm_world.bcast(thisAV_l, root=0)
-        thisSPS_l = comm_world.bcast(thisSPS_l, root=0)
-        local_coords_l = comm_world.bcast(local_coords_l, root=0)
-        Pre_Disps_l = comm_world.bcast(Pre_Disps_l, root=0)
-        isRecycled_l = comm_world.bcast(isRecycled_l, root=0)
-        isPGSYMM_l = comm_world.bcast(isPGSYMM_l, root=0)
-        thisSOPs_l = comm_world.bcast(thisSOPs_l, root=0)
-        SNC_l = comm_world.bcast(SNC_l, root=0)
-        CalPref_l = comm_world.bcast(CalPref_l, root=0)
-        isDynmat_l = comm_world.bcast(isDynmat_l, root=0)
-        thisVNS_l = comm_world.bcast(thisVNS_l, root=0)
+        isVisit = mpi.comm.bcast(isVisit, root=0)
+        thisAV_l = mpi.comm.bcast(thisAV_l, root=0)
+        thisSPS_l = mpi.comm.bcast(thisSPS_l, root=0)
+        local_coords_l = mpi.comm.bcast(local_coords_l, root=0)
+        Pre_Disps_l = mpi.comm.bcast(Pre_Disps_l, root=0)
+        isRecycled_l = mpi.comm.bcast(isRecycled_l, root=0)
+        isPGSYMM_l = mpi.comm.bcast(isPGSYMM_l, root=0)
+        thisSOPs_l = mpi.comm.bcast(thisSOPs_l, root=0)
+        SNC_l = mpi.comm.bcast(SNC_l, root=0)
+        CalPref_l = mpi.comm.bcast(CalPref_l, root=0)
+        isDynmat_l = mpi.comm.bcast(isDynmat_l, root=0)
+        thisVNS_l = mpi.comm.bcast(thisVNS_l, root=0)
 
         if iter > 0 and iter % 4 == 0:
-            completed_avs = comm_world.bcast(completed_avs, root=0)
+            completed_avs = mpi.comm.bcast(completed_avs, root=0)
             ai = np.argwhere(completed_avs == True)
             bi = np.argwhere(isDynmat_l == True)
             ci = np.intersect1d(ai, bi)
@@ -870,7 +870,7 @@ def data_SPS_no_master_slave(nproc_task, start_proc, ntask_time, thiscolor, comm
     this_idavs = None
     dynmatAV = None
     dynmatAV_l = None
-    comm_world.Barrier()
+    mpi.comm.Barrier()
 
     return DataSPs, AVitags, df_delete_SPs
 
@@ -885,7 +885,7 @@ def data_find_saddlepoints(istep, thissett, seakmcdata, DefectBank_list, thisSup
         start_proc = 1
     else:
         start_proc = 0
-    if nproc_task == size_world:
+    if nproc_task == mpi.size:
         start_proc = 0
         Master_Slave = False
 
@@ -918,17 +918,17 @@ def data_find_saddlepoints(istep, thissett, seakmcdata, DefectBank_list, thisSup
     force_evaluator.close()
     if COMM_args["isSplit"]:
         COMM_args["thiscomm"].Free()
-    comm_world.Barrier()
+    mpi.comm.Barrier()
 
-    if rank_world == 0:
+    if mpi.rank == 0:
         pass
     else:
         DataSPs = None
         AVitags = None
         df_delete_SPs = None
 
-    DataSPs = comm_world.bcast(DataSPs, root=0)
-    AVitags = comm_world.bcast(AVitags, root=0)
-    df_delete_SPs = comm_world.bcast(df_delete_SPs, root=0)
+    DataSPs = mpi.comm.bcast(DataSPs, root=0)
+    AVitags = mpi.comm.bcast(AVitags, root=0)
+    df_delete_SPs = mpi.comm.bcast(df_delete_SPs, root=0)
 
     return DataSPs, AVitags, df_delete_SPs

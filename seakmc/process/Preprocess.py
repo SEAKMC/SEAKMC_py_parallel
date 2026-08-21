@@ -1,6 +1,5 @@
 import os
 
-from mpi4py import MPI
 
 import seakmc.general.General as mygen
 import seakmc.process.DataDyn as mydatadyn
@@ -8,6 +7,7 @@ from seakmc.core.data import SeakmcData
 from seakmc.restart.Restart import RESTART
 import seakmc.mpiconf.MPIconf as mympi
 from seakmc.mpiconf.error_exit import error_exit
+from seakmc.mpiconf.context import mpi
 
 def load_RESTART(Restartsett):
     thisRestart = None
@@ -40,7 +40,7 @@ def load_RESTART(Restartsett):
 
 
 def initial_data_dynamics(thissett, seakmcdata, force_evaluator, LogWriter, **COMM_args):
-    comm_world = MPI.COMM_WORLD
+    comm_world = mpi.comm
     rank_world = comm_world.Get_rank()
     size_world = comm_world.Get_size()
     ntask_tot = 1
@@ -120,7 +120,7 @@ def initial_data_dynamics(thissett, seakmcdata, force_evaluator, LogWriter, **CO
 
 
 def preprocess(thissett):
-    comm_world = MPI.COMM_WORLD
+    comm_world = mpi.comm
     rank_world = comm_world.Get_rank()
     size_world = comm_world.Get_size()
     Eground = 0.0

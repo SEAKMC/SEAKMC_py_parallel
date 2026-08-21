@@ -5,12 +5,12 @@ import warnings
 import shutil
 import numpy as np
 import pandas as pd
-from mpi4py import MPI
 
 from seakmc.core.util import mat_lengths, mat_angles, mats_angles, mats_angle, mat_mag
 from seakmc.input.Input import SP_COMPACT_HEADER, SP_COMPACT_HEADER4Delete, DEFECTBANK_ATOMS_HEADER, \
     DEFECTBANK_DISPS_HEADER
 from seakmc.input.Input import SP_DATA_HEADER, NDISPARRAY, NENTRY_COMPACT_DISP
+from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -20,9 +20,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
 
 
 class SaddlePoint:
@@ -345,7 +342,7 @@ class SaddlePoint:
 
             else:
                 isValid = False
-                if rank_world == 0:
+                if mpi.rank == 0:
                     warnings.warn("The symmetry operater is not valid.")
                 break
         return thisdisp, thisfdisp, isValid

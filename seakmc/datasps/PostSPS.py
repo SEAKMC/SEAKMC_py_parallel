@@ -1,4 +1,5 @@
-from mpi4py import MPI
+
+from seakmc.mpiconf.context import mpi
 
 import seakmc.datasps.PreSPS as preSPS
 from seakmc.spsearch.SaddlePoints import DefectBank
@@ -10,8 +11,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
 
 
 def SPs_1postprocessing(thissett, thisSPS, df_delete_SPs, DFWriter, nSPstart=0):

@@ -4,11 +4,11 @@ import shutil
 
 import numpy as np
 import pandas as pd
-from mpi4py import MPI
 
 from seakmc.core.symmetry import PGSymmOps, SymmOP
 from seakmc.dynmat.Dynmat import DynMat
 from seakmc.spsearch.SaddlePoints import AV_SPs, DefectBank
+from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -18,9 +18,6 @@ __maintainer__ = "Tao Liang"
 __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
-comm_world = MPI.COMM_WORLD
-rank_world = comm_world.Get_rank()
-size_world = comm_world.Get_size()
 
 
 def load_DefectBanks(DBsett, DBLoadpath, significant_figures=6):
@@ -176,7 +173,7 @@ def diagonize_dynmatAV(dynmatAV, isVib=False, Get_inv_luf=True, comm=None):
 
 
 def get_thisSNC4spsearch(idav, thissett, thisAV, thisSNC, thisCalPref, object_dict, thiscolor, istep, comm=None):
-    if comm is None: comm = MPI.COMM_WORLD
+    if comm is None: comm = mpi.comm
     force_evaluator = object_dict['force_evaluator']
     DynMatOutpath = object_dict['out_paths'][5]
     dynmatAV = get_dynmatAV(idav, thissett, thisAV, force_evaluator, thiscolor, istep, DynMatOutpath, comm=comm)

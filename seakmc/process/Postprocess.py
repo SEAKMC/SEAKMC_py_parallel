@@ -2,10 +2,10 @@ import os
 import shutil
 import time
 
-from mpi4py import MPI
+from seakmc.mpiconf.context import mpi
 
 def postprocess(tic, thissett, object_dict, simulation_time):
-    comm_world = MPI.COMM_WORLD
+    comm_world = mpi.comm
     rank_world = comm_world.Get_rank()
     size_world = comm_world.Get_size()
     comm_world.Barrier()
@@ -27,4 +27,6 @@ def postprocess(tic, thissett, object_dict, simulation_time):
         LogWriter.write_data(logstr)
 
     comm_world.Barrier()
-    MPI.Finalize()
+    if mpi.has_mpi:
+        from mpi4py import MPI  # only reached under a real MPI run
+        MPI.Finalize()
