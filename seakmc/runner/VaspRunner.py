@@ -77,10 +77,10 @@ class VaspRunner(object):
         try:
             subprocess.call([os.path.join(self.path_to_callscript, self.callscript), job_dir_path], stdout=devnull,
                             stderr=devnull)
-        except:
+        except Exception as e:
             if rank_local == 0:
                 isValid = False
-                errormsg = f"Error on running VASP!"
+                errormsg = f"Error on running VASP: {type(e).__name__}: {e}"
                 errormsg += ("\n" +
                              f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
 
@@ -200,10 +200,10 @@ class VaspRunner(object):
         try:
             subprocess.call([os.path.join(self.path_to_callscript, self.callscript), job_dir_path], stdout=devnull,
                             stderr=devnull)
-        except:
+        except Exception as e:
             if rank_local == 0:
                 isValid = False
-                errormsg = f"Error on running VASP!"
+                errormsg = f"Error on running VASP: {type(e).__name__}: {e}"
                 errormsg += ("\n" +
                              f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
 

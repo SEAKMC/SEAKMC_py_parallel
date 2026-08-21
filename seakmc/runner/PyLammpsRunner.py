@@ -127,7 +127,8 @@ class PyLammpsRunner(object):
         if rank_local == 0:
             if total_energy is None or relaxed_coords is None:
                 isValid = False
-                errormsg = f"Error on initializing PYLAMMPS!"
+                detail = getattr(self, "_last_error", "no detail captured")
+                errormsg = f"Error on initializing PYLAMMPS: {detail}"
                 errormsg += ("\n" +
                              f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
         else:
@@ -156,9 +157,9 @@ class PyLammpsRunner(object):
             total_energy = self.bin.get_thermo("etotal")
             forces = self.bin.gather_atoms("f", 1, 3)
             forces = np.ctypeslib.as_array(forces)
-        except:
+        except Exception as e:
             isValid = False
-            errormsg = f"Error on getting forces from PYLAMMPS!"
+            errormsg = f"Error on getting forces from PYLAMMPS: {type(e).__name__}: {e}"
             errormsg += ("\n" +
                          f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
         return [total_energy, forces, isValid, errormsg]
@@ -171,7 +172,8 @@ class PyLammpsRunner(object):
             etotal = self.bin.get_thermo("etotal")
             coords = self.bin.gather_atoms("x", 1, 3)
             coords = np.ctypeslib.as_array(coords)
-        except:
+        except Exception as e:
+            self._last_error = f"{type(e).__name__}: {e}"
             etotal = None
             coords = None
         return etotal, coords

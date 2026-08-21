@@ -167,7 +167,7 @@ class LammpsRunner(object):
         except subprocess.CalledProcessError as e:
             if rank_local == 0:
                 isValid = False
-                errormsg = f"Error on initializing LAMMPS!"
+                errormsg = f"Error on running LAMMPS (exit {e.returncode})!"
                 errormsg += ("\n" +
                              f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
 
@@ -223,7 +223,7 @@ class LammpsRunner(object):
         except subprocess.CalledProcessError as e:
             if rank_local == 0:
                 isValid = False
-                errormsg = f"Error on initializing LAMMPS!"
+                errormsg = f"Error on running LAMMPS (exit {e.returncode})!"
                 errormsg += ("\n" +
                              f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
 
