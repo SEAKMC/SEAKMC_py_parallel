@@ -43,17 +43,18 @@ class PyLammpsRunner(object):
         else:
             args += ["-log", "none"]
 
-        if isinstance(kwargs, dict):
-            for key in kwargs:
-                if key in Valid_GPU_args:
-                    val = kwargs[key]
-                    args.append(key)
-                    if isinstance(val, str):
-                        vs = val.split(",")
-                        for v in vs:
-                            args.append(v.strip())
-                else:
-                    args.append(str(val))
+        # Accelerator flags are passed straight through to LAMMPS; SEAKMC does
+        # not compute forces itself. An unrecognised key used to fall into an
+        # else-branch that referenced `val`, which is bound only in the branch
+        # above -- so the first unknown key raised NameError, and a later one
+        # silently appended the previous key's value instead.
+        for key, val in kwargs.items():
+            if key not in Valid_GPU_args:
+                error_exit(f"Unknown force_evaluator GPU argument {key!r}. "
+                           f"Expected one of: {', '.join(Valid_GPU_args)}.")
+            args.append(key)
+            if isinstance(val, str):
+                args.extend(v.strip() for v in val.split(",") if v.strip())
         from lammps import lammps  # imported here so the package stays importable
                                    # without a LAMMPS installation
         self.bin = lammps(cmdargs=args, comm=comm)
