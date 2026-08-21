@@ -1,10 +1,16 @@
+# Core runtime dependencies.
+#
+# NOTE: SEAKMC does not provide an energy/force evaluator. Install one
+# separately -- see the optional extras in pyproject.toml, e.g.
+#     pip install seakmc_p[lammps]
+# The LAMMPS Python module is normally obtained by building LAMMPS as a
+# shared library, not from PyPI.
+
 numpy>=1.26.0
 scipy>=1.10.1
 pandas>=2.0.1
 mpi4py<=3.1.6
 monty>=2023.4.10
 pymatgen>=2023.11.12
-yaml>=0.2.5
 pyyaml>=6.0
-lammps>=2023.03.28
 setuptools>=67.7.2
