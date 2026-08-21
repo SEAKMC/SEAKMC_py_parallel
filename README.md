@@ -134,7 +134,7 @@ The framework can also be extended to incorporate other energy and force evaluat
 - [NumPy](https://numpy.org/) ≥ 1.26.0
 - [SciPy](https://scipy.org/) ≥ 1.10.1
 - [pandas](https://pandas.pydata.org/) ≥ 2.0.1
-- [mpi4py](https://mpi4py.readthedocs.io/) ≤ 3.1.6
+- [mpi4py](https://mpi4py.readthedocs.io/) ≥ 3.1.0
 - [monty](https://github.com/materialsvirtuallab/monty) ≥ 2023.4.10
 - [pymatgen](https://pymatgen.org/) ≥ 2023.11.12
 - [PyYAML](https://pyyaml.org/) ≥ 6.0

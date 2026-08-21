@@ -45,7 +45,10 @@ dependencies = [
     "numpy>=1.26.0",
     "scipy>=1.10.1",
     "pandas>=2.0.1",
-    "mpi4py<=3.1.6",
+    # Verified against 3.1.6 and 4.1.2. The former <=3.1.6 cap predated 4.0 and
+    # blocked Python 3.13, for which 3.1.6 ships no wheel; every MPI call this
+    # package makes is core API unchanged across 3.x and 4.x.
+    "mpi4py>=3.1.0",
     "monty>=2023.4.10",
     "pymatgen>=2023.11.12",
     "pyyaml>=6.0",
