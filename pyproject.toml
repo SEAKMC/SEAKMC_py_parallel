@@ -60,7 +60,8 @@ dependencies = [
 # is offered here only as a convenience.
 [project.optional-dependencies]
 lammps = ["lammps>=2023.03.28"]
-all = ["seakmc[lammps]"]
+test = ["pytest>=7.0"]
+all = ["seakmc[lammps,test]"]
 
 [project.scripts]
 seakmc = "seakmc.cli:main"
@@ -76,3 +77,7 @@ Manual = "https://github.com/SEAKMC/SEAKMC_py_parallel/blob/main/SEAKMC_MANUAL.p
 [tool.setuptools.packages.find]
 include = ["seakmc*"]  # matches both seakmc* and the seakmc_p* compat shim
 exclude = ["tests*", "docs*", "examples*", "run_script*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

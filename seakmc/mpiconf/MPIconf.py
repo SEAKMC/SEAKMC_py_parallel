@@ -2,6 +2,8 @@ import numpy as np
 
 from mpi4py import MPI
 
+from seakmc.mpiconf.error_exit import error_exit
+
 __author__ = "Tao Liang"
 __copyright__ = "Copyright 2021"
 __version__ = "1.0"
@@ -48,8 +50,8 @@ def get_ntask_time(nproc_task, start_proc=0, thiscomm=None):
     size_local = thiscomm.Get_size()
     #rank_local = thiscomm.Get_rank()
     if size_local < nproc_task + start_proc:
-        print("The number of cores must be greater than the number of communicators.")
-        MPI.COMM_WORLD.Abort()
+        error_exit(f"The number of cores ({size_local}) must be greater than the number of "
+                   f"communicators ({nproc_task + start_proc}).")
     ntask_time = int((size_local - start_proc) / nproc_task)
 
     return ntask_time
