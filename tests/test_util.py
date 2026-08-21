@@ -84,3 +84,17 @@ def test_to_half_matrix_keeps_lower_triangle():
     a = np.arange(9, dtype=float).reshape(3, 3)
     h = to_half_matrix(a)
     assert np.allclose(np.triu(h, 1), 0.0)
+
+
+def test_diffusion_coefficient_reaches_the_summary():
+    """Regression: get_diffusion_coeff computed a value that was never copied
+    into the export dict, so the Seakmc_summary.csv column read 0.0 for every
+    step of every run."""
+    import inspect
+    import seakmc.datasps.DataKMC as dk
+    from seakmc.input.Input import export_Keys
+
+    src = inspect.getsource(dk)
+    for key in ("mean_squared_disp", "diffusion_coeff", "one_over_freq"):
+        assert key in export_Keys, key
+        assert f'thisExports["{key}"]' in src, f"{key} is declared in export_Keys but never exported"
