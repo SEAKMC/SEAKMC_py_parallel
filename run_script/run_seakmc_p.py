@@ -3,11 +3,11 @@
 
 The entry point now lives in the installed package. Equivalent invocations:
 
-    mpirun -np <nprocs> seakmc_p
-    mpirun -np <nprocs> python -m seakmc_p
+    mpirun -np <nprocs> seakmc
+    mpirun -np <nprocs> python -m seakmc
 """
 
-from seakmc_p.cli import main
+from seakmc.cli import main
 
 if __name__ == '__main__':
     main()

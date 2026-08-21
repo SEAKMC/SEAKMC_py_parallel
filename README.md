@@ -155,6 +155,12 @@ cd SEAKMC_py_parallel
 pip install -e .
 ```
 
+The distribution and the import package are both named `seakmc`:
+
+```python
+import seakmc
+```
+
 SEAKMC itself has no force evaluator. To pull in the LAMMPS Python module from
 PyPI as well:
 
@@ -165,6 +171,18 @@ pip install -e ".[lammps]"
 > **Note:** the PyPI `lammps` distribution is an unofficial third-party build.
 > For production use, build LAMMPS as a shared library and install its own
 > Python module — the integrated installer below does this for you.
+
+<details>
+<summary><b>Upgrading from <code>seakmc_p</code></b></summary>
+
+Earlier releases used the import name `seakmc_p`. That name still works and
+resolves to `seakmc`, so existing scripts, job files, and — importantly —
+existing `.restart` checkpoints continue to load. It emits a
+`DeprecationWarning` and will be removed in a future release; update
+`import seakmc_p` to `import seakmc` when convenient. The `seakmc_p` console
+script is also retained as an alias for `seakmc`.
+
+</details>
 ### Integrated installer [Integrated installer]
 The [Integrated installer] is an integrated bash script to install pyLAMMPS, Open-KIM force field, mpi4py, and SEAKMC.
 ```bash
@@ -192,12 +210,13 @@ bash integrated_installer.sh
 mpirun -np <nprocs> python run_seakmc_p.py
 ```
 
-Or, if installed as a console script:
+Or, once installed, using the console script:
 
 ```bash
-mpirun -np <nprocs> seakmc_p
+mpirun -np <nprocs> seakmc
 ```
- > **Note:** run_seakmc_p.py is available in the [`run_script/`](run_script/) directory 
+ > **Note:** `run_seakmc_p.py` is available in the [`run_script/`](run_script/) directory.
+ > `mpirun -np <nprocs> python -m seakmc` is equivalent. 
 
 ---
 

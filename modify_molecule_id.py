@@ -3,7 +3,7 @@ import time
 import numpy as np
 import shutil
 
-from seakmc_p.core.data import SeakmcData
+from seakmc.core.data import SeakmcData
 
 infile = "in.data"
 outfile = "out.data"

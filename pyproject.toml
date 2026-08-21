@@ -3,7 +3,7 @@ requires = ["setuptools>=67.7.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "seakmc_p"
+name = "seakmc"
 version = "2.1.0"
 description = "Self-Evolving Atomistic Kinetic Monte Carlo (SEAKMC) for long-timescale atomistic simulation"
 readme = "README.md"
@@ -57,10 +57,12 @@ dependencies = [
 # is offered here only as a convenience.
 [project.optional-dependencies]
 lammps = ["lammps>=2023.03.28"]
-all = ["seakmc_p[lammps]"]
+all = ["seakmc[lammps]"]
 
 [project.scripts]
-seakmc_p = "seakmc_p.cli:main"
+seakmc = "seakmc.cli:main"
+# Retained so existing job scripts invoking `seakmc_p` keep working.
+seakmc_p = "seakmc.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/SEAKMC/SEAKMC_py_parallel"
@@ -69,5 +71,5 @@ Issues = "https://github.com/SEAKMC/SEAKMC_py_parallel/issues"
 Manual = "https://github.com/SEAKMC/SEAKMC_py_parallel/blob/main/SEAKMC_MANUAL.pdf"
 
 [tool.setuptools.packages.find]
-include = ["seakmc_p*"]
+include = ["seakmc*"]  # matches both seakmc* and the seakmc_p* compat shim
 exclude = ["tests*", "docs*", "examples*", "run_script*"]
