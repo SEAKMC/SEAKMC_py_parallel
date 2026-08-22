@@ -32,6 +32,16 @@ SCHEMA_ID = "https://github.com/SEAKMC/SEAKMC_py_parallel/schema/input.schema.js
 #: version, so writing it into a committed artifact makes the file unstable --
 #: the drift check would then fail on an unrelated dependency bump rather than
 #: on a real change. The keys are still declared; only the value is withheld.
+#: Nested blocks whose contents are inherited from another section at parse
+#: time rather than defaulted. spsearch.force_evaluator is copied from the
+#: already-merged top-level force_evaluator (Input.py:673-675), so its "default"
+#: is whatever the input file set -- writing those values into a committed
+#: artifact makes it depend on which example generated it. Keys are still
+#: declared; only the values are withheld.
+INHERITED_BLOCKS = {
+    ("spsearch", "force_evaluator"): "inherited from the top-level force_evaluator section",
+}
+
 DERIVED_DEFAULTS = {
     ("active_volume", "cutdefectmax"),
     ("active_volume", "DActive"),
@@ -60,9 +70,15 @@ def _describe(value):
 
 
 def _properties_for(section, defaults, merged):
+    """``defaults`` is the pre-merge snapshot; ``merged`` is only a fallback.
+
+    Reading values from ``merged`` documented whichever input file happened to
+    generate the schema rather than the program's defaults, which also made the
+    artifact unstable and broke the CI drift check.
+    """
     props = {}
     for key in sorted(defaults):
-        value = merged.get(key)
+        value = defaults[key] if isinstance(defaults, dict) else merged.get(key)
         if (section, key) in DERIVED_DEFAULTS:
             props[key] = {"description": "derived from the interatomic potential "
                                          "(a multiple of cutdefectmax); omit to accept it"}
@@ -70,9 +86,15 @@ def _properties_for(section, defaults, merged):
         entry = {"description": _describe(value)}
         if isinstance(value, dict):
             entry["type"] = "object"
-            entry["properties"] = {
-                sub: {"description": _describe(subval)} for sub, subval in sorted(value.items())
-            }
+            inherited = INHERITED_BLOCKS.get((section, key))
+            if inherited:
+                entry["description"] = inherited
+                entry["properties"] = {sub: {"description": inherited}
+                                       for sub in sorted(value)}
+            else:
+                entry["properties"] = {
+                    sub: {"description": _describe(subval)} for sub, subval in sorted(value.items())
+                }
             for sub in NESTED_USER_KEYS.get((section, key), ()):
                 entry["properties"].setdefault(
                     sub, {"description": "supplied by the user; no default"})

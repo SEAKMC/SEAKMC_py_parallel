@@ -40,7 +40,10 @@ REQUIRED_USER_KEYS = {
 # Nested keys the parser reads but never seeds with a default, so they do not
 # appear in the defaults snapshot. Verified present in the source.
 NESTED_USER_KEYS = {
-    ("active_volume", "FindDefects"): ("atom_style4Ref", "ReferenceData", "Defects"),
+    # DCut4Def is seeded conditionally (Input.py:593,609) -- its default depends
+    # on the detection method -- so it is absent from the pre-merge snapshot
+    # even though the code reads it.
+    ("active_volume", "FindDefects"): ("atom_style4Ref", "ReferenceData", "Defects", "DCut4Def"),
 }
 
 NUMERIC_KEYS = {
@@ -96,7 +99,13 @@ def check_unknown_keys(parameters, settings):
         for key, value in given.items():
             if key in known:
                 # One level of nesting, where the default is itself a mapping.
-                sub_default = merged.get(key) if isinstance(merged, dict) else None
+                # Nested registry from the snapshot for the same reason as the
+                # top level: the merged object already contains any unknown
+                # sub-key the parser copied in.
+                snap = defaults[sec] if isinstance(defaults[sec], dict) else {}
+                sub_default = snap.get(key)
+                if not isinstance(sub_default, dict) and isinstance(merged, dict):
+                    sub_default = merged.get(key)
                 if isinstance(value, dict) and isinstance(sub_default, dict):
                     allowed = set(sub_default) | set(NESTED_USER_KEYS.get((sec, key), ()))
                     for sub in value:

@@ -13,7 +13,7 @@ Optional sections: `system`, `force_evaluator`, `dynamic_matrix`, `defect_bank`,
 |---|---|
 | `BoxRelax` | default: False (unset; may also take a value) |
 | `MoleDyn` | default: False (unset; may also take a value) |
-| `Relaxed` | default: False (unset; may also take a value) |
+| `Relaxed` | default: True |
 | `RinputMD` | default: False (unset; may also take a value) |
 | `RinputMD0` | default: False (unset; may also take a value) |
 | `RinputOpt` | default: False (unset; may also take a value) |
@@ -36,7 +36,7 @@ no defaults registry; keys are not checked
 | `EnCut4Transient` | default: 0.5 -- must be a number |
 | `Handle_no_Backward` | default: 'Out' |
 | `NMaxBasin` | default: "NA" (no limit) |
-| `NSteps` | default: 2 -- must be a number |
+| `NSteps` | default: 1 -- must be a number |
 | `Sorting` | default: False (unset; may also take a value) |
 | `Temp` | default: 800.0 -- must be a number |
 | `Temp4Time` | default: 800.0 |
@@ -55,14 +55,14 @@ no defaults registry; keys are not checked
 | `DefectCenter4RT_SetMolID` | default: 'AUTO' |
 | `Exclusive` | default: True |
 | `FCT4RT_SetMolID` | list, default: ['INF', 'INF', 'INF', 'INF', 'INF', 'INF'] |
-| `FindDefects` | mapping with 5 key(s) |
-| `FindDefects.DCut4Def` | default: 0.1 |
-| `FindDefects.Defects` | list, default: [] |
+| `FindDefects` | mapping with 3 key(s) |
 | `FindDefects.DiscardType` | list, default: [] |
 | `FindDefects.Method` | default: 'BLCN' |
 | `FindDefects.MolIDCap` | default: "NA" (no limit) |
 | `FindDefects.atom_style4Ref` | supplied by the user; no default |
 | `FindDefects.ReferenceData` | supplied by the user; no default |
+| `FindDefects.Defects` | supplied by the user; no default |
+| `FindDefects.DCut4Def` | supplied by the user; no default |
 | `MaxBreadth4Recursive4AV` | default: not set |
 | `MaxBreadth4Recursive4PDR` | default: not set |
 | `NMax4AV` | default: False (unset; may also take a value) |
@@ -172,7 +172,7 @@ no defaults registry; keys are not checked
 | `Preloading.Scaling` | default: 1.0 |
 | `Preloading.SortDisps` | default: False (unset; may also take a value) |
 | `R2Dmax4SPAtom` | default: 0.04 |
-| `SearchBuffer` | default: True |
+| `SearchBuffer` | default: False (unset; may also take a value) |
 | `ShowCoords4ShowIterationResults` | default: False (unset; may also take a value) |
 | `ShowIterationResults` | default: False (unset; may also take a value) |
 | `ShowVN4ShowIterationResults` | default: False (unset; may also take a value) |
@@ -181,28 +181,28 @@ no defaults registry; keys are not checked
 | `TransHorizon` | default: True |
 | `TrialStepsize` | default: 0.015 -- must be a number |
 | `TrialStepsizeFine` | default: 0.003 |
-| `force_evaluator` | mapping with 21 key(s) |
-| `force_evaluator.Bin` | default: 'pylammps' |
-| `force_evaluator.GPU` | mapping with 0 key(s) |
-| `force_evaluator.ImportValue4RinputOpt` | default: False (unset; may also take a value) |
-| `force_evaluator.Keys4ImportValue4RinputOpt` | list, default: [['Timestep', 'time_step']] |
-| `force_evaluator.LogFile` | default: False (unset; may also take a value) |
-| `force_evaluator.Master_Slave4ReCal` | default: False (unset; may also take a value) |
-| `force_evaluator.NSteps4Relax` | default: 10000 |
-| `force_evaluator.OutFileHeaders` | list, default: [] |
-| `force_evaluator.Path2Bin` | default: False (unset; may also take a value) |
-| `force_evaluator.Rinput` | default: False (unset; may also take a value) |
-| `force_evaluator.RinputDM` | default: False (unset; may also take a value) |
-| `force_evaluator.RinputMD0` | default: False (unset; may also take a value) |
-| `force_evaluator.RinputOpt` | default: False (unset; may also take a value) |
-| `force_evaluator.Screen` | default: False (unset; may also take a value) |
-| `force_evaluator.Style` | default: 'pylammps' |
-| `force_evaluator.TrialDisps2Basin` | mapping with 10 key(s) |
-| `force_evaluator.nproc` | default: 1 |
-| `force_evaluator.nproc4ReCal` | default: 1 |
-| `force_evaluator.partition` | default: False (unset; may also take a value) |
-| `force_evaluator.processors` | default: False (unset; may also take a value) |
-| `force_evaluator.timestep` | default: 0.002 |
+| `force_evaluator` | inherited from the top-level force_evaluator section |
+| `force_evaluator.Bin` | inherited from the top-level force_evaluator section |
+| `force_evaluator.GPU` | inherited from the top-level force_evaluator section |
+| `force_evaluator.ImportValue4RinputOpt` | inherited from the top-level force_evaluator section |
+| `force_evaluator.Keys4ImportValue4RinputOpt` | inherited from the top-level force_evaluator section |
+| `force_evaluator.LogFile` | inherited from the top-level force_evaluator section |
+| `force_evaluator.Master_Slave4ReCal` | inherited from the top-level force_evaluator section |
+| `force_evaluator.NSteps4Relax` | inherited from the top-level force_evaluator section |
+| `force_evaluator.OutFileHeaders` | inherited from the top-level force_evaluator section |
+| `force_evaluator.Path2Bin` | inherited from the top-level force_evaluator section |
+| `force_evaluator.Rinput` | inherited from the top-level force_evaluator section |
+| `force_evaluator.RinputDM` | inherited from the top-level force_evaluator section |
+| `force_evaluator.RinputMD0` | inherited from the top-level force_evaluator section |
+| `force_evaluator.RinputOpt` | inherited from the top-level force_evaluator section |
+| `force_evaluator.Screen` | inherited from the top-level force_evaluator section |
+| `force_evaluator.Style` | inherited from the top-level force_evaluator section |
+| `force_evaluator.TrialDisps2Basin` | inherited from the top-level force_evaluator section |
+| `force_evaluator.nproc` | inherited from the top-level force_evaluator section |
+| `force_evaluator.nproc4ReCal` | inherited from the top-level force_evaluator section |
+| `force_evaluator.partition` | inherited from the top-level force_evaluator section |
+| `force_evaluator.processors` | inherited from the top-level force_evaluator section |
+| `force_evaluator.timestep` | inherited from the top-level force_evaluator section |
 
 ## `saddle_point` (required)
 
@@ -248,13 +248,11 @@ no defaults registry; keys are not checked
 | `EbiasMin` | default: "NA" (no limit) |
 | `Prefactor` | default: 10.0 -- must be a number |
 | `Thres4Recalib` | default: not set |
-| `ValidSPs` | mapping with 29 key(s) |
+| `ValidSPs` | mapping with 27 key(s) |
 | `ValidSPs.AND4ScreenDE` | default: True |
 | `ValidSPs.AngCut4GSP` | default: 10.0 |
 | `ValidSPs.AngCut4Type` | default: 5.0 |
 | `ValidSPs.CheckConnectivity` | default: True |
-| `ValidSPs.CosAngCut4GSP` | default: 0.01519224698779198 |
-| `ValidSPs.CosAngCut4Type` | default: 0.003805301908254455 |
 | `ValidSPs.EnCut4GSP` | default: 0.1 |
 | `ValidSPs.EnCut4Type` | default: 0.05 |
 | `ValidSPs.EnTol4AVSP` | default: 0.1 |
@@ -304,7 +302,7 @@ no defaults registry; keys are not checked
 | setting | notes |
 |---|---|
 | `Bin` | default: 'pylammps' |
-| `GPU` | mapping with 0 key(s) |
+| `GPU` | default: not set |
 | `ImportValue4RinputOpt` | default: False (unset; may also take a value) |
 | `Keys4ImportValue4RinputOpt` | list, default: [['Timestep', 'time_step']] |
 | `LogFile` | default: False (unset; may also take a value) |
@@ -332,8 +330,8 @@ no defaults registry; keys are not checked
 | `TrialDisps2Basin.Target_StrainRate` | default: not set |
 | `TrialDisps2Basin.TrialDisps2Basin` | default: False (unset; may also take a value) |
 | `TrialDisps2Basin.nDisps` | default: 4 |
-| `nproc` | default: 1 |
-| `nproc4ReCal` | default: 1 |
+| `nproc` | default: 'auto' |
+| `nproc4ReCal` | default: 'auto' |
 | `partition` | default: False (unset; may also take a value) |
 | `processors` | default: False (unset; may also take a value) |
 | `timestep` | default: 0.002 |

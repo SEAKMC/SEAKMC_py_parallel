@@ -183,10 +183,14 @@ class Settings:
 
     @classmethod
     def from_file(cls, filename):
-        # Key registry for validation: the set each defaults dict establishes,
-        # snapshotted BEFORE user values are merged in. Comparing against the
-        # merged settings cannot work -- the parser copies unknown keys in, so
-        # a misspelled key would look like a known one.
+        # Registry of the defaults each section establishes, snapshotted BEFORE
+        # user values are merged in. Two consumers need it, and neither can use
+        # the finished settings object: validation needs the key NAMES, because
+        # the parser copies unknown keys straight in so a typo is
+        # indistinguishable afterwards; schema generation needs the default
+        # VALUES, because the merged object holds whatever the input file said
+        # -- generating from that produced a schema documenting one example's
+        # settings rather than the program's defaults.
         _default_keys = {}
 
         with open(filename, 'r') as f:
@@ -206,7 +210,7 @@ class Settings:
                       "significant_figures": 6, "float_precision": 3, "VerySmallNumber": 1.0e-20,
                       "angle_tolerance": 5.0, "Tolerance": 0.1,
                       "Restart": Restart}
-        _default_keys["system"] = set(thissystem)
+        _default_keys["system"] = copy.deepcopy(thissystem)
 
         if "system" in parameters:
             tsystem = parameters["system"]
@@ -223,7 +227,7 @@ class Settings:
         thisdata = {"units": "metal", "dimension": 3, "boundary": "p p p",
                     "Relaxed": True, "BoxRelax": False, "MoleDyn": False,
                     "RinputOpt": False, "RinputMD": False, "RinputMD0": False}
-        _default_keys["data"] = set(thisdata)
+        _default_keys["data"] = copy.deepcopy(thisdata)
         data = parameters['data']
         if "FileName" not in data:
             raise ValueError("There must be a FileName for data!")
@@ -259,7 +263,7 @@ class Settings:
                      "ImportValue4RinputOpt": False, "Keys4ImportValue4RinputOpt": [["Timestep", "time_step"]],
                      "OutFileHeaders": [], "Relaxation": Relaxation, "TrialDisps2Basin": TrialDisps2Basin,
                      "GPU": None}
-        _default_keys["force_evaluator"] = set(thisfeval)
+        _default_keys["force_evaluator"] = copy.deepcopy(thisfeval)
 
         if "force_evaluator" in parameters:
             force_evaluator = parameters["force_evaluator"]
@@ -553,7 +557,7 @@ class Settings:
                   "SortingShift": [0.0, 0.0, 0.0],
                   "SortingBuffer": False, "SortingFixed": False,
                   "PBC": [False, False, False], "NMin_perproc": 5}
-        _default_keys["active_volume"] = set(thisav)
+        _default_keys["active_volume"] = copy.deepcopy(thisav)
 
         active_volume = parameters['active_volume']
         if "Style" not in active_volume: active_volume["Style"] = "defects"
@@ -705,7 +709,7 @@ class Settings:
                         "ApplyMass": False, "TaskDist": "AV", "Master_Slave": True,
                         "LocalRelax": LocalRelax, "force_evaluator": spsearch_force_evaluator, "Preloading": Preloading,
                         "HandleVN": HandleVN}
-        _default_keys["spsearch"] = set(thisspsearch)
+        _default_keys["spsearch"] = copy.deepcopy(thisspsearch)
 
         spsearch = parameters['spsearch']
         for key in spsearch:
@@ -732,7 +736,7 @@ class Settings:
         thisKMC = {"NSteps": 1, "Temp": 800.0, "Temp4Time": 800.0, "AccStyle": "NoAcc", "NMaxBasin": "NA",
                    "Tol4Disp": 0.1, "Tol4Barr": 0.03,
                    "EnCut4Transient": 0.5, "Handle_no_Backward": "Out", "DispStyle": "FI", "Sorting": False}
-        _default_keys["kinetic_MC"] = set(thisKMC)
+        _default_keys["kinetic_MC"] = copy.deepcopy(thisKMC)
         if "kinetic_MC" in parameters:
             KMC = parameters['kinetic_MC']
             for key in KMC:
@@ -746,7 +750,7 @@ class Settings:
         thisDynMat = {"SNC": False, "NMax4SNC": 1000, "displacement": 0.000001,
                       "delimiter": " ", "LowerHalfMat": False, "OutDynMat": False,
                       "CalPrefactor": False, "Method4Prefactor": "harmonic", "VibCut": 1.0e-8}
-        _default_keys["dynamic_matrix"] = set(thisDynMat)
+        _default_keys["dynamic_matrix"] = copy.deepcopy(thisDynMat)
         if "dynamic_matrix" in parameters:
             DynMat = parameters['dynamic_matrix']
             for key in DynMat:
@@ -757,7 +761,7 @@ class Settings:
                           "FileHeader": "DB", "LoadDB": False, "LoadPath": "DefectBank", "SortDisps": False,
                           "Recycle": False, "UseSymm": False, "SaveDB": False, "SavePath": "DefectBank",
                           "OutIndex": True}
-        _default_keys["defect_bank"] = set(thisDefectBank)
+        _default_keys["defect_bank"] = copy.deepcopy(thisDefectBank)
         if "defect_bank" in parameters:
             DefectBank = parameters['defect_bank']
             for key in DefectBank:
@@ -790,7 +794,7 @@ class Settings:
                   "DsumCut_FS": "NA", "DsumMin_FS": 0.0, "DsumrCut_FS": "NA", "DsumrMin_FS": 0.0,
                   "Prefactor": 10.0, "CalBarrsInData": False, "CalEbiasInData": False, "Thres4Recalib": None,
                   "ValidSPs": ValidSPs}
-        _default_keys["saddle_point"] = set(thissp)
+        _default_keys["saddle_point"] = copy.deepcopy(thissp)
 
         saddlepoint = parameters["saddle_point"]
         for key in saddlepoint:
@@ -853,7 +857,7 @@ class Settings:
                       "RCut4Vis": 0.04, "DCut4Vis": 0.01, "Invisible": True, "Reset_Index": False, "ShowBuffer": False,
                       "ShowFixed": False,
                       "Write_Data_SPs": Write_Data_SPs, "Write_AV_SPs": Write_AV_SPs}
-        _default_keys["visual"] = set(thisvisual)
+        _default_keys["visual"] = copy.deepcopy(thisvisual)
 
         if "visual" in parameters:
             visual = parameters['visual']

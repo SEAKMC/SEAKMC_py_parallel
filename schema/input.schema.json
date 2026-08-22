@@ -25,8 +25,8 @@
           "default": false
         },
         "Relaxed": {
-          "description": "default: False (unset; may also take a value)",
-          "default": false
+          "description": "default: True",
+          "default": true
         },
         "RinputMD": {
           "description": "default: False (unset; may also take a value)",
@@ -89,8 +89,8 @@
           "default": "NA"
         },
         "NSteps": {
-          "description": "default: 2 -- must be a number",
-          "default": 2
+          "description": "default: 1 -- must be a number",
+          "default": 1
         },
         "Sorting": {
           "description": "default: False (unset; may also take a value)",
@@ -153,15 +153,9 @@
           ]
         },
         "FindDefects": {
-          "description": "mapping with 5 key(s)",
+          "description": "mapping with 3 key(s)",
           "type": "object",
           "properties": {
-            "DCut4Def": {
-              "description": "default: 0.1"
-            },
-            "Defects": {
-              "description": "list, default: []"
-            },
             "DiscardType": {
               "description": "list, default: []"
             },
@@ -175,6 +169,12 @@
               "description": "supplied by the user; no default"
             },
             "ReferenceData": {
+              "description": "supplied by the user; no default"
+            },
+            "Defects": {
+              "description": "supplied by the user; no default"
+            },
+            "DCut4Def": {
               "description": "supplied by the user; no default"
             }
           },
@@ -584,8 +584,8 @@
           "default": 0.04
         },
         "SearchBuffer": {
-          "description": "default: True",
-          "default": true
+          "description": "default: False (unset; may also take a value)",
+          "default": false
         },
         "ShowCoords4ShowIterationResults": {
           "description": "default: False (unset; may also take a value)",
@@ -620,71 +620,71 @@
           "default": 0.003
         },
         "force_evaluator": {
-          "description": "mapping with 21 key(s)",
+          "description": "inherited from the top-level force_evaluator section",
           "type": "object",
           "properties": {
             "Bin": {
-              "description": "default: 'pylammps'"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "GPU": {
-              "description": "mapping with 0 key(s)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "ImportValue4RinputOpt": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "Keys4ImportValue4RinputOpt": {
-              "description": "list, default: [['Timestep', 'time_step']]"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "LogFile": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "Master_Slave4ReCal": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "NSteps4Relax": {
-              "description": "default: 10000"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "OutFileHeaders": {
-              "description": "list, default: []"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "Path2Bin": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "Rinput": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "RinputDM": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "RinputMD0": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "RinputOpt": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "Screen": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "Style": {
-              "description": "default: 'pylammps'"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "TrialDisps2Basin": {
-              "description": "mapping with 10 key(s)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "nproc": {
-              "description": "default: 1"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "nproc4ReCal": {
-              "description": "default: 1"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "partition": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "processors": {
-              "description": "default: False (unset; may also take a value)"
+              "description": "inherited from the top-level force_evaluator section"
             },
             "timestep": {
-              "description": "default: 0.002"
+              "description": "inherited from the top-level force_evaluator section"
             }
           },
           "additionalProperties": false
@@ -854,7 +854,7 @@
           "description": "default: not set"
         },
         "ValidSPs": {
-          "description": "mapping with 29 key(s)",
+          "description": "mapping with 27 key(s)",
           "type": "object",
           "properties": {
             "AND4ScreenDE": {
@@ -868,12 +868,6 @@
             },
             "CheckConnectivity": {
               "description": "default: True"
-            },
-            "CosAngCut4GSP": {
-              "description": "default: 0.01519224698779198"
-            },
-            "CosAngCut4Type": {
-              "description": "default: 0.003805301908254455"
             },
             "EnCut4GSP": {
               "description": "default: 0.1"
@@ -1024,10 +1018,7 @@
           "default": "pylammps"
         },
         "GPU": {
-          "description": "mapping with 0 key(s)",
-          "type": "object",
-          "properties": {},
-          "additionalProperties": false
+          "description": "default: not set"
         },
         "ImportValue4RinputOpt": {
           "description": "default: False (unset; may also take a value)",
@@ -1135,12 +1126,12 @@
           "additionalProperties": false
         },
         "nproc": {
-          "description": "default: 1",
-          "default": 1
+          "description": "default: 'auto'",
+          "default": "auto"
         },
         "nproc4ReCal": {
-          "description": "default: 1",
-          "default": 1
+          "description": "default: 'auto'",
+          "default": "auto"
         },
         "partition": {
           "description": "default: False (unset; may also take a value)",
