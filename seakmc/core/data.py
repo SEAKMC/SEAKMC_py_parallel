@@ -1261,6 +1261,24 @@ class SeakmcData(LammpsData, MSONable):
         self.defects = self.defects.drop(["dsq"], axis=1)
         self.defects = self.defects.set_index(np.arange(self.ndefects, dtype=int))
 
+    def _canonicalize_defect_order(self):
+        """Order the defect frame by atom tag, so grouping is reproducible.
+
+        Falls back silently if no unique key is available, leaving the previous
+        behaviour rather than raising inside defect identification.
+        """
+        key = None
+        for candidate in ("tag", "itag"):
+            if candidate in self.defects.columns:
+                col = self.defects[candidate]
+                if col.is_unique:
+                    key = candidate
+                    break
+        if key is None:
+            return
+        self.defects = self.defects.sort_values([key], ascending=True, kind="mergesort")
+        self.defects = self.defects.set_index(np.arange(len(self.defects), dtype=int))
+
     def get_defects(self, LogWriter, last_de_center=None):
         defect_cols = ["xsn", "ysn", "zsn", "idc", "dCN"]
         DActive = self.sett.active_volume["DActive"]
@@ -1302,6 +1320,17 @@ class SeakmcData(LammpsData, MSONable):
             LogWriter.write_data(logstr)
         if self.sett.active_volume['PDReduction']:
             if self.sett.active_volume['SortD4PDR']: self.sort_defects4PDreduction()
+            # Chain building seeds greedily in row order, so the grouping of
+            # point defects into active volumes depends on the order of this
+            # frame. That order is not stable: the relaxed structure comes back
+            # with a row order that varies with the MPI rank count, which made
+            # identical geometry produce different active volumes at different
+            # -np. (SortD4PDR does not fix it -- it sorts on distance from the
+            # defect centroid, and for a symmetric defect every entry ties, so
+            # the incoming order survives.) Sorting on the atom tag, which is
+            # unique and independent of both row order and rank count, makes
+            # the grouping a function of the structure alone.
+            self._canonicalize_defect_order()
             DCut4PDR = self.sett.active_volume['DCut4PDR']
             DCut4PDR = min(DCut4PDR, DActive)
             self.defects = self.get_fractional_coords(self.defects, From_Cart=False)
