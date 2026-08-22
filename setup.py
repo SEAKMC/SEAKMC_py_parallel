@@ -1,22 +1,12 @@
 #!/usr/bin/env python
+"""Compatibility shim.
 
-import os
-from setuptools import setup, find_packages
+Project metadata lives in ``pyproject.toml``. This file is retained so that
+tooling which expects a ``setup.py`` to be present keeps working -- notably
+``integrated_installer.sh``, which uses it as the sentinel file when deciding
+whether a source checkout already exists.
+"""
 
+from setuptools import setup
 
-setup(
-    name='seakmc_p',
-    packages=find_packages(exclude=('tests', 'docs')),
-    include_package_data=True,
-    version='2.0.0',
-    package_data={
-        "seakmc_p.input": ["*.yaml"],
-    },
-    entry_points={
-        'console_scripts': ['seakmc_p = seakmc_p.script.seakmc_p:main']
-    },
-    description='Self Evolution Adaptive Kinetic Monte Carlo',
-    author='Tao Liang',
-    author_email='xhtliang120@gmail.com',
-    url='https://github.com/TaoLiang120/SEAKMC_py_parallel',
-)
+setup()

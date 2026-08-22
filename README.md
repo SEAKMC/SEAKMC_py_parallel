@@ -1,6 +1,6 @@
 # SEAKMC_py_parallel
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD-green.svg)](LICENSE)
 
 **Self-Evolving Atomistic Kinetic Monte Carlo (SEAKMC)** is a Python-based atomistic simulation framework for exploring long-timescale material evolution using kinetic Monte Carlo (KMC). SEAKMC constructs saddle-point/event catalogs on the fly and enables efficient sampling of the potential energy landscape through **spatial decomposition into localized active volumes (AVs)** and **MPI-based parallel saddle-point searches**. **SEAKMC** is designed for studying defect evolution, diffusion, irradiation effects, phase transformations, and microstructural evolution in materials.
@@ -30,7 +30,7 @@ SEAKMC is free to use. We welcome contributions to help improve this library, in
   - **LAMMPS** (standalone binary via system calls)
   - **PyLAMMPS** (in-process Python bindings, zero file I/O)
   - **VASP** (ab-initio DFT)
-  - **JAX-MD**
+  - **JAX-MD** *(planned — not yet implemented)*
 - **Checkpoint/restart support** — Full simulation state is serialized via `pickle` for fault-tolerant long-running simulations.
 
 ---
@@ -130,16 +130,18 @@ The framework can also be extended to incorporate other energy and force evaluat
 
 ## Requirements
 
-- Python ≥ 3.8
+- Python ≥ 3.10
 - [NumPy](https://numpy.org/) ≥ 1.26.0
 - [SciPy](https://scipy.org/) ≥ 1.10.1
 - [pandas](https://pandas.pydata.org/) ≥ 2.0.1
-- [mpi4py](https://mpi4py.readthedocs.io/) ≤ 3.1.6
+- [mpi4py](https://mpi4py.readthedocs.io/) ≥ 3.1.0
 - [monty](https://github.com/materialsvirtuallab/monty) ≥ 2023.4.10
 - [pymatgen](https://pymatgen.org/) ≥ 2023.11.12
 - [PyYAML](https://pyyaml.org/) ≥ 6.0
-- [LAMMPS](https://www.lammps.org/) (Python package) ≥ 2023.03.28
 - [setuptools](https://setuptools.pypa.io/) ≥ 67.7.2
+
+Plus an energy/force evaluator, which SEAKMC does **not** provide — see
+[Installation](#installation).
 
 ---
 
@@ -148,10 +150,39 @@ Noting that SEAKMC itself does **not** provide an energy or force evaluator, the
 ### From Source
 
 ```bash
-git clone https://github.com/TaoLiang120/SEAKMC_py_parallel.git
+git clone https://github.com/SEAKMC/SEAKMC_py_parallel.git
 cd SEAKMC_py_parallel
 pip install -e .
 ```
+
+The distribution and the import package are both named `seakmc`:
+
+```python
+import seakmc
+```
+
+SEAKMC itself has no force evaluator. To pull in the LAMMPS Python module from
+PyPI as well:
+
+```bash
+pip install -e ".[lammps]"
+```
+
+> **Note:** the PyPI `lammps` distribution is an unofficial third-party build.
+> For production use, build LAMMPS as a shared library and install its own
+> Python module — the integrated installer below does this for you.
+
+<details>
+<summary><b>Upgrading from <code>seakmc_p</code></b></summary>
+
+Earlier releases used the import name `seakmc_p`. That name still works and
+resolves to `seakmc`, so existing scripts, job files, and — importantly —
+existing `.restart` checkpoints continue to load. It emits a
+`DeprecationWarning` and will be removed in a future release; update
+`import seakmc_p` to `import seakmc` when convenient. The `seakmc_p` console
+script is also retained as an alias for `seakmc`.
+
+</details>
 ### Integrated installer [Integrated installer]
 The [Integrated installer] is an integrated bash script to install pyLAMMPS, Open-KIM force field, mpi4py, and SEAKMC.
 ```bash
@@ -179,12 +210,13 @@ bash integrated_installer.sh
 mpirun -np <nprocs> python run_seakmc_p.py
 ```
 
-Or, if installed as a console script:
+Or, once installed, using the console script:
 
 ```bash
-mpirun -np <nprocs> seakmc_p
+mpirun -np <nprocs> seakmc
 ```
- > **Note:** run_seakmc_p.py is available in the [`run_script/`](run_script/) directory 
+ > **Note:** `run_seakmc_p.py` is available in the [`run_script/`](run_script/) directory.
+ > `mpirun -np <nprocs> python -m seakmc` is equivalent. 
 
 ---
 

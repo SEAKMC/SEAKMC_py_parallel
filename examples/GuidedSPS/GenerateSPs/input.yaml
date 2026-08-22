@@ -3,7 +3,7 @@ system:
         LoadRestart: True
         LoadFile: False
         WriteRestart: False
-        KMCstep4Restart: 5
+        KMCStep4Restart: 5
 potential:
     species:
         - Fe

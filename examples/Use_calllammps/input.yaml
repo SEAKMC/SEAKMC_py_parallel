@@ -16,8 +16,6 @@ force_evaluator:
     Bin: calllammps
     Path2Bin: False
     Style: lammps
-    WorkWorkDir: True
-    Input2color: False
     RinputOpt: False
 data:
     atom_style: atomic

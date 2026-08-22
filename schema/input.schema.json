@@ -1,0 +1,1376 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/SEAKMC/SEAKMC_py_parallel/schema/input.schema.json",
+  "title": "SEAKMC input",
+  "description": "Generated from the settings defaults; do not edit by hand.",
+  "type": "object",
+  "required": [
+    "data",
+    "potential",
+    "kinetic_MC",
+    "active_volume",
+    "spsearch",
+    "saddle_point"
+  ],
+  "properties": {
+    "data": {
+      "type": "object",
+      "properties": {
+        "BoxRelax": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "MoleDyn": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Relaxed": {
+          "description": "default: True",
+          "default": true
+        },
+        "RinputMD": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "RinputMD0": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "RinputOpt": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "boundary": {
+          "description": "default: 'p p p'",
+          "default": "p p p"
+        },
+        "dimension": {
+          "description": "default: 3",
+          "default": 3
+        },
+        "units": {
+          "description": "default: 'metal'",
+          "default": "metal"
+        },
+        "FileName": {
+          "description": "supplied by the user; no default"
+        },
+        "atom_style": {
+          "description": "supplied by the user; no default"
+        }
+      },
+      "additionalProperties": false
+    },
+    "potential": {
+      "type": "object",
+      "description": "no defaults registry; keys are not checked"
+    },
+    "kinetic_MC": {
+      "type": "object",
+      "properties": {
+        "AccStyle": {
+          "description": "default: 'NoAcc'",
+          "default": "NoAcc"
+        },
+        "DispStyle": {
+          "description": "default: 'FI'",
+          "default": "FI"
+        },
+        "EnCut4Transient": {
+          "description": "default: 0.5 -- must be a number",
+          "default": 0.5
+        },
+        "Handle_no_Backward": {
+          "description": "default: 'Out'",
+          "default": "Out"
+        },
+        "NMaxBasin": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "NSteps": {
+          "description": "default: 1 -- must be a number",
+          "default": 1
+        },
+        "Sorting": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Temp": {
+          "description": "default: 800.0 -- must be a number",
+          "default": 800.0
+        },
+        "Temp4Time": {
+          "description": "default: 800.0",
+          "default": 800.0
+        },
+        "Tol4Barr": {
+          "description": "default: 0.03 -- must be a number",
+          "default": 0.03
+        },
+        "Tol4Disp": {
+          "description": "default: 0.1 -- must be a number",
+          "default": 0.1
+        }
+      },
+      "additionalProperties": false
+    },
+    "active_volume": {
+      "type": "object",
+      "properties": {
+        "DActive": {
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
+        },
+        "DBuffer": {
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
+        },
+        "DCut4PDR": {
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
+        },
+        "DCut4noOverlap": {
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
+        },
+        "DFixed": {
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
+        },
+        "DefectCenter4RT_SetMolID": {
+          "description": "default: 'AUTO'",
+          "default": "AUTO"
+        },
+        "Exclusive": {
+          "description": "default: True",
+          "default": true
+        },
+        "FCT4RT_SetMolID": {
+          "description": "list, default: ['INF', 'INF', 'INF', 'INF', 'INF', 'INF']",
+          "default": [
+            "INF",
+            "INF",
+            "INF",
+            "INF",
+            "INF",
+            "INF"
+          ]
+        },
+        "FindDefects": {
+          "description": "mapping with 3 key(s)",
+          "type": "object",
+          "properties": {
+            "DiscardType": {
+              "description": "list, default: []"
+            },
+            "Method": {
+              "description": "default: 'BLCN'"
+            },
+            "MolIDCap": {
+              "description": "default: \"NA\" (no limit)"
+            },
+            "atom_style4Ref": {
+              "description": "supplied by the user; no default"
+            },
+            "ReferenceData": {
+              "description": "supplied by the user; no default"
+            },
+            "Defects": {
+              "description": "supplied by the user; no default"
+            },
+            "DCut4Def": {
+              "description": "supplied by the user; no default"
+            }
+          },
+          "additionalProperties": false
+        },
+        "MaxBreadth4Recursive4AV": {
+          "description": "default: not set"
+        },
+        "MaxBreadth4Recursive4PDR": {
+          "description": "default: not set"
+        },
+        "NMax4AV": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "NMax4Def": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "NMax4PG": {
+          "description": "default: 1000",
+          "default": 1000
+        },
+        "NMin4AV": {
+          "description": "default: 40 -- must be a number",
+          "default": 40
+        },
+        "NMin_perproc": {
+          "description": "default: 5 -- must be a number",
+          "default": 5
+        },
+        "NPredef": {
+          "description": "default: 0",
+          "default": 0
+        },
+        "Overlapping": {
+          "description": "default: True",
+          "default": true
+        },
+        "PBC": {
+          "description": "list, default: [False, False, False]",
+          "default": [
+            false,
+            false,
+            false
+          ]
+        },
+        "PDReduction": {
+          "description": "default: True",
+          "default": true
+        },
+        "PointGroupSymm": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "PredefOnly": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "R4RT_SetMolID": {
+          "description": "default: 30 -- must be a number",
+          "default": 30
+        },
+        "RT_SetMolID": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "RecursiveRed": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "SortD4PDR": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Sort_by": {
+          "description": "list, default: ['D', 'X', 'Y', 'Z']",
+          "default": [
+            "D",
+            "X",
+            "Y",
+            "Z"
+          ]
+        },
+        "Sorting": {
+          "description": "default: True",
+          "default": true
+        },
+        "SortingBuffer": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "SortingFixed": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "SortingShift": {
+          "description": "list, default: [0.0, 0.0, 0.0]",
+          "default": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "SortingSpacer": {
+          "description": "list, default: [0.3, 0.3, 0.3]",
+          "default": [
+            0.3,
+            0.3,
+            0.3
+          ]
+        },
+        "Stack4noOverlap": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Style": {
+          "description": "default: 'defects'",
+          "default": "defects"
+        },
+        "cutdefectmax": {
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
+        },
+        "NActive": {
+          "description": "supplied by the user; no default"
+        },
+        "NBuffer": {
+          "description": "supplied by the user; no default"
+        },
+        "NFixed": {
+          "description": "supplied by the user; no default"
+        },
+        "TurnoffPBC": {
+          "description": "supplied by the user; no default"
+        }
+      },
+      "additionalProperties": false
+    },
+    "spsearch": {
+      "type": "object",
+      "properties": {
+        "ActiveOnly4SPConfig": {
+          "description": "default: True",
+          "default": true
+        },
+        "AngCut": {
+          "description": "default: 2.0",
+          "default": 2.0
+        },
+        "ApplyMass": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "CheckAng": {
+          "description": "default: True",
+          "default": true
+        },
+        "CheckAngSteps": {
+          "description": "default: 50",
+          "default": 50
+        },
+        "DCut4SPAtom": {
+          "description": "default: 0.01",
+          "default": 0.01
+        },
+        "DRatio4Relax": {
+          "description": "default: 2.0",
+          "default": 2.0
+        },
+        "DecayRate": {
+          "description": "default: 0.71",
+          "default": 0.71
+        },
+        "DecaySteps": {
+          "description": "default: 20",
+          "default": 20
+        },
+        "DecayStyle": {
+          "description": "default: 'Fixed'",
+          "default": "Fixed"
+        },
+        "DimerSep": {
+          "description": "default: 0.005 -- must be a number",
+          "default": 0.005
+        },
+        "DynCut4SPAtom": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "En4TransHorizon": {
+          "description": "default: 0.1",
+          "default": 0.1
+        },
+        "EnConv": {
+          "description": "default: 1e-05 -- must be a number",
+          "default": 1e-05
+        },
+        "FConv": {
+          "description": "default: 1e-06 -- must be a number",
+          "default": 1e-06
+        },
+        "FMin4Rot": {
+          "description": "default: 0.001",
+          "default": 0.001
+        },
+        "FThres4Rot": {
+          "description": "default: 0.1",
+          "default": 0.1
+        },
+        "FixAxesStr": {
+          "description": "default: 'ALL'",
+          "default": "ALL"
+        },
+        "FixTypes": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "HandleVN": {
+          "description": "mapping with 24 key(s)",
+          "type": "object",
+          "properties": {
+            "AngTol4Init": {
+              "description": "default: 5.0"
+            },
+            "CenterVN": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "CheckAng4Init": {
+              "description": "default: True"
+            },
+            "IgnoreSteps": {
+              "description": "default: 4"
+            },
+            "Int4ComputeScale": {
+              "description": "default: 1"
+            },
+            "MaxIter4Init": {
+              "description": "default: 20"
+            },
+            "MinSpan4LOGV": {
+              "description": "default: 4.0"
+            },
+            "MinSpan4RAS": {
+              "description": "default: 40.0"
+            },
+            "MinValue4LOGV": {
+              "description": "default: -20.0"
+            },
+            "NMaxRandVN": {
+              "description": "default: 20"
+            },
+            "NSteps4CenterVN": {
+              "description": "default: 5"
+            },
+            "Period4MA": {
+              "description": "default: 1"
+            },
+            "PowerOnV": {
+              "description": "default: 4"
+            },
+            "Ratio4Zero4LOGV": {
+              "description": "default: 0.2"
+            },
+            "Ratio4Zero4RAS": {
+              "description": "default: 0.3"
+            },
+            "RatioVN04Preload": {
+              "description": "default: 0.2"
+            },
+            "RescaleStyle4LOGV": {
+              "description": "default: 'SIGMOID'"
+            },
+            "RescaleStyle4RAS": {
+              "description": "default: 'SIGMOID'"
+            },
+            "RescaleVN": {
+              "description": "default: True"
+            },
+            "RescaleValue": {
+              "description": "default: 'LOGVN'"
+            },
+            "ResetVN04Preload": {
+              "description": "default: True"
+            },
+            "TakeMin4MixedRescales": {
+              "description": "default: True"
+            },
+            "XRange4LOGV": {
+              "description": "default: 20.0"
+            },
+            "XRange4RAS": {
+              "description": "default: 40.0"
+            }
+          },
+          "additionalProperties": false
+        },
+        "IgnoreSteps": {
+          "description": "default: 4",
+          "default": 4
+        },
+        "IgnoreStepsFine": {
+          "description": "default: 2",
+          "default": 2
+        },
+        "Inteval4ShowIterationResults": {
+          "description": "default: 1",
+          "default": 1
+        },
+        "LocalRelax": {
+          "description": "mapping with 4 key(s)",
+          "type": "object",
+          "properties": {
+            "InitTemp4Opt": {
+              "description": "default: 0.0"
+            },
+            "LocalRelax": {
+              "description": "default: True"
+            },
+            "NVTSteps4Opt": {
+              "description": "default: 1000"
+            },
+            "TargetTemp4NVT": {
+              "description": "default: 5.0"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Master_Slave": {
+          "description": "default: True",
+          "default": true
+        },
+        "MaxStepsize": {
+          "description": "default: 0.05 -- must be a number",
+          "default": 0.05
+        },
+        "MaxStepsizeFine": {
+          "description": "default: 0.01",
+          "default": 0.01
+        },
+        "Method": {
+          "description": "default: 'dimer'",
+          "default": "dimer"
+        },
+        "MinStepsize": {
+          "description": "default: 0.003 -- must be a number",
+          "default": 0.003
+        },
+        "NMax4Rot": {
+          "description": "default: 3 -- must be a number",
+          "default": 3
+        },
+        "NMax4Trans": {
+          "description": "default: 1000 -- must be a number",
+          "default": 1000
+        },
+        "NSearch": {
+          "description": "default: 10 -- must be a number",
+          "default": 10
+        },
+        "OutFix4IterationResults": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "OutForces4IterationResults": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Preloading": {
+          "description": "mapping with 10 key(s)",
+          "type": "object",
+          "properties": {
+            "CheckSequence": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "FileHeader": {
+              "description": "default: 'SPS_AV_'"
+            },
+            "FileHeader4Data": {
+              "description": "default: 'SPS_basin_'"
+            },
+            "IgnoreType": {
+              "description": "default: True"
+            },
+            "LoadPath": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "Method": {
+              "description": "default: 'Files'"
+            },
+            "Preload": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "Ratio4DispLoad": {
+              "description": "default: 0.8"
+            },
+            "Scaling": {
+              "description": "default: 1.0"
+            },
+            "SortDisps": {
+              "description": "default: False (unset; may also take a value)"
+            }
+          },
+          "additionalProperties": false
+        },
+        "R2Dmax4SPAtom": {
+          "description": "default: 0.04",
+          "default": 0.04
+        },
+        "SearchBuffer": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "ShowCoords4ShowIterationResults": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "ShowIterationResults": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "ShowVN4ShowIterationResults": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "TaskDist": {
+          "description": "default: 'AV'",
+          "default": "AV"
+        },
+        "Tol4Connect": {
+          "description": "default: 0.1",
+          "default": 0.1
+        },
+        "TransHorizon": {
+          "description": "default: True",
+          "default": true
+        },
+        "TrialStepsize": {
+          "description": "default: 0.015 -- must be a number",
+          "default": 0.015
+        },
+        "TrialStepsizeFine": {
+          "description": "default: 0.003",
+          "default": 0.003
+        },
+        "force_evaluator": {
+          "description": "inherited from the top-level force_evaluator section",
+          "type": "object",
+          "properties": {
+            "Bin": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "GPU": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "ImportValue4RinputOpt": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "Keys4ImportValue4RinputOpt": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "LogFile": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "Master_Slave4ReCal": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "NSteps4Relax": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "OutFileHeaders": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "Path2Bin": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "Rinput": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "RinputDM": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "RinputMD0": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "RinputOpt": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "Screen": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "Style": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "TrialDisps2Basin": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "nproc": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "nproc4ReCal": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "partition": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "processors": {
+              "description": "inherited from the top-level force_evaluator section"
+            },
+            "timestep": {
+              "description": "inherited from the top-level force_evaluator section"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "saddle_point": {
+      "type": "object",
+      "properties": {
+        "BackBarrierMin": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "BarrierCut": {
+          "description": "default: 10.0 -- must be a number",
+          "default": 10.0
+        },
+        "BarrierMin": {
+          "description": "default: 0.0 -- must be a number",
+          "default": 0.0
+        },
+        "CalBarrsInData": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "CalEbiasInData": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "DAtomCut": {
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
+        },
+        "DmagCut": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DmagCut_FI": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DmagCut_FS": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DmagMin": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DmagMin_FI": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DmagMin_FS": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DmaxCut": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DmaxCut_FI": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DmaxCut_FS": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DmaxMin": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DmaxMin_FI": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DmaxMin_FS": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DsumCut": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DsumCut_FI": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DsumCut_FS": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DsumMin": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DsumMin_FI": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DsumMin_FS": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DsumrCut": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DsumrCut_FI": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DsumrCut_FS": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DsumrMin": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DsumrMin_FI": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DsumrMin_FS": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DtotCut": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DtotCut_FI": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DtotCut_FS": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "DtotMin": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DtotMin_FI": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "DtotMin_FS": {
+          "description": "default: 0.0",
+          "default": 0.0
+        },
+        "EbiasCut": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "EbiasMin": {
+          "description": "default: \"NA\" (no limit)",
+          "default": "NA"
+        },
+        "Prefactor": {
+          "description": "default: 10.0 -- must be a number",
+          "default": 10.0
+        },
+        "Thres4Recalib": {
+          "description": "default: not set"
+        },
+        "ValidSPs": {
+          "description": "mapping with 27 key(s)",
+          "type": "object",
+          "properties": {
+            "AND4ScreenDE": {
+              "description": "default: True"
+            },
+            "AngCut4GSP": {
+              "description": "default: 10.0"
+            },
+            "AngCut4Type": {
+              "description": "default: 5.0"
+            },
+            "CheckConnectivity": {
+              "description": "default: True"
+            },
+            "EnCut4GSP": {
+              "description": "default: 0.1"
+            },
+            "EnCut4Type": {
+              "description": "default: 0.05"
+            },
+            "EnTol4AVSP": {
+              "description": "default: 0.1"
+            },
+            "FindSPType": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "GroupSP": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "LenCut4Type": {
+              "description": "default: 0.05"
+            },
+            "MagCut4GSP": {
+              "description": "default: 0.1"
+            },
+            "MagCut4Type": {
+              "description": "default: 0.05"
+            },
+            "MaxRatio4Barr": {
+              "description": "default: \"NA\" (no limit)"
+            },
+            "MaxRatio4Dmag": {
+              "description": "default: \"NA\" (no limit)"
+            },
+            "NCommonMin": {
+              "description": "default: 10"
+            },
+            "NMax4Dup": {
+              "description": "default: 600"
+            },
+            "NScreenDisp": {
+              "description": "default: 0"
+            },
+            "NScreenEng": {
+              "description": "default: 0"
+            },
+            "R2Dmax4Tol": {
+              "description": "default: 0.1"
+            },
+            "RealtimeDelete": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "RealtimeValid": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "ScreenDisp": {
+              "description": "mapping with 6 key(s)"
+            },
+            "ScreenEng": {
+              "description": "mapping with 4 key(s)"
+            },
+            "Tol4AVSP": {
+              "description": "default: 0.1"
+            },
+            "Tol4Disp": {
+              "description": "default: 0.1"
+            },
+            "toScreenDisp": {
+              "description": "default: 'NotConn'"
+            },
+            "toScreenEng": {
+              "description": "default: 'NotConn'"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "system": {
+      "type": "object",
+      "properties": {
+        "Interval4ShowProgress": {
+          "description": "default: 10 -- must be a number",
+          "default": 10
+        },
+        "RandomSeed": {
+          "description": "default: not set"
+        },
+        "Restart": {
+          "description": "mapping with 6 key(s)",
+          "type": "object",
+          "properties": {
+            "AVStep4Restart": {
+              "description": "default: 1000"
+            },
+            "KMCStep4Restart": {
+              "description": "default: 1"
+            },
+            "LoadFile": {
+              "description": "default: not set"
+            },
+            "LoadRestart": {
+              "description": "default: True"
+            },
+            "Reset_Simulation_Time": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "WriteRestart": {
+              "description": "default: True"
+            }
+          },
+          "additionalProperties": false
+        },
+        "TempFiles": {
+          "description": "list, default: ['tmp0.dat', 'tmp1.dat', 'tmp2.dat']",
+          "default": [
+            "tmp0.dat",
+            "tmp1.dat",
+            "tmp2.dat"
+          ]
+        },
+        "Tolerance": {
+          "description": "default: 0.1",
+          "default": 0.1
+        },
+        "VerySmallNumber": {
+          "description": "default: 1e-20",
+          "default": 1e-20
+        },
+        "angle_tolerance": {
+          "description": "default: 5.0",
+          "default": 5.0
+        },
+        "float_precision": {
+          "description": "default: 3",
+          "default": 3
+        },
+        "significant_figures": {
+          "description": "default: 6",
+          "default": 6
+        }
+      },
+      "additionalProperties": false
+    },
+    "force_evaluator": {
+      "type": "object",
+      "properties": {
+        "Bin": {
+          "description": "default: 'pylammps'",
+          "default": "pylammps"
+        },
+        "GPU": {
+          "description": "default: not set"
+        },
+        "ImportValue4RinputOpt": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Keys4ImportValue4RinputOpt": {
+          "description": "list, default: [['Timestep', 'time_step']]",
+          "default": [
+            [
+              "Timestep",
+              "time_step"
+            ]
+          ]
+        },
+        "LogFile": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Master_Slave4ReCal": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "NSteps4Relax": {
+          "description": "default: 10000",
+          "default": 10000
+        },
+        "OutFileHeaders": {
+          "description": "list, default: []",
+          "default": []
+        },
+        "Path2Bin": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Relaxation": {
+          "description": "mapping with 4 key(s)",
+          "type": "object",
+          "properties": {
+            "BoxRelax": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "InitTemp4Opt": {
+              "description": "default: 0.0"
+            },
+            "NVTSteps4Opt": {
+              "description": "default: 10000"
+            },
+            "TargetTemp4NVT": {
+              "description": "default: 5.0"
+            }
+          },
+          "additionalProperties": false
+        },
+        "RinputMD0": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "RinputOpt": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Screen": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Style": {
+          "description": "default: 'pylammps'",
+          "default": "pylammps"
+        },
+        "TrialDisps2Basin": {
+          "description": "mapping with 10 key(s)",
+          "type": "object",
+          "properties": {
+            "Disps": {
+              "description": "list, default: [0.001, 0.002, 0.004, 0.008]"
+            },
+            "Keys4ImportValue4RinputTDB": {
+              "description": "list, default: [['displacement equal', 'displacement']]"
+            },
+            "MaxDisp": {
+              "description": "default: 0.01"
+            },
+            "MinDisp": {
+              "description": "default: 0.0001"
+            },
+            "Ref_Length": {
+              "description": "default: not set"
+            },
+            "RinputTDB": {
+              "description": "default: not set"
+            },
+            "StrainRateType": {
+              "description": "default: 1"
+            },
+            "Target_StrainRate": {
+              "description": "default: not set"
+            },
+            "TrialDisps2Basin": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "nDisps": {
+              "description": "default: 4"
+            }
+          },
+          "additionalProperties": false
+        },
+        "nproc": {
+          "description": "default: 'auto'",
+          "default": "auto"
+        },
+        "nproc4ReCal": {
+          "description": "default: 'auto'",
+          "default": "auto"
+        },
+        "partition": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "processors": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "timestep": {
+          "description": "default: 0.002",
+          "default": 0.002
+        }
+      },
+      "additionalProperties": false
+    },
+    "dynamic_matrix": {
+      "type": "object",
+      "properties": {
+        "CalPrefactor": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "LowerHalfMat": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Method4Prefactor": {
+          "description": "default: 'harmonic'",
+          "default": "harmonic"
+        },
+        "NMax4SNC": {
+          "description": "default: 1000",
+          "default": 1000
+        },
+        "OutDynMat": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "SNC": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "VibCut": {
+          "description": "default: 1e-08",
+          "default": 1e-08
+        },
+        "delimiter": {
+          "description": "default: ' '",
+          "default": " "
+        },
+        "displacement": {
+          "description": "default: 1e-06",
+          "default": 1e-06
+        }
+      },
+      "additionalProperties": false
+    },
+    "defect_bank": {
+      "type": "object",
+      "properties": {
+        "FileHeader": {
+          "description": "default: 'DB'",
+          "default": "DB"
+        },
+        "IgnoreType": {
+          "description": "default: True",
+          "default": true
+        },
+        "LoadDB": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "LoadPath": {
+          "description": "default: 'DefectBank'",
+          "default": "DefectBank"
+        },
+        "NMax4DB": {
+          "description": "default: 100",
+          "default": 100
+        },
+        "NMin4DB": {
+          "description": "default: 8",
+          "default": 8
+        },
+        "OutIndex": {
+          "description": "default: True",
+          "default": true
+        },
+        "Preload": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Ratio4DispLoad": {
+          "description": "default: 0.8",
+          "default": 0.8
+        },
+        "Recycle": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "SaveDB": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "SavePath": {
+          "description": "default: 'DefectBank'",
+          "default": "DefectBank"
+        },
+        "Scaling": {
+          "description": "default: 1.0",
+          "default": 1.0
+        },
+        "SortDisps": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Tol4Disp": {
+          "description": "default: 0.1",
+          "default": 0.1
+        },
+        "UseSymm": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "visual": {
+      "type": "object",
+      "properties": {
+        "DCut4Vis": {
+          "description": "default: 0.01",
+          "default": 0.01
+        },
+        "Invisible": {
+          "description": "default: True",
+          "default": true
+        },
+        "Log": {
+          "description": "default: True",
+          "default": true
+        },
+        "LogFile": {
+          "description": "default: 'Seakmc.log'",
+          "default": "Seakmc.log"
+        },
+        "RCut4Vis": {
+          "description": "default: 0.04",
+          "default": 0.04
+        },
+        "Reset_Index": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Screen": {
+          "description": "default: True",
+          "default": true
+        },
+        "ShowBuffer": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "ShowFixed": {
+          "description": "default: False (unset; may also take a value)",
+          "default": false
+        },
+        "Write_AV_SPs": {
+          "description": "mapping with 6 key(s)",
+          "type": "object",
+          "properties": {
+            "AVOutPath": {
+              "description": "default: 'AVOut'"
+            },
+            "DispStyle4AVSP": {
+              "description": "default: 'BOTH'"
+            },
+            "OutputStyle": {
+              "description": "default: 'SEP'"
+            },
+            "Write_AV_SPs": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "Write_Data_AV_SPs": {
+              "description": "default: False (unset; may also take a value)"
+            },
+            "Write_Local_AV": {
+              "description": "default: False (unset; may also take a value)"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Write_Data_SPs": {
+          "description": "mapping with 11 key(s)",
+          "type": "object",
+          "properties": {
+            "DataOutPath": {
+              "description": "default: 'DataOut'"
+            },
+            "DetailOut": {
+              "description": "default: True"
+            },
+            "DispStyle4DataSP": {
+              "description": "default: 'Both'"
+            },
+            "Offset": {
+              "description": "default: 0"
+            },
+            "OutputStyle": {
+              "description": "default: 'SEP'"
+            },
+            "SPs4Detail": {
+              "description": "default: 'AUTO'"
+            },
+            "Sel_iSPs": {
+              "description": "default: 'AUTO'"
+            },
+            "Write_Data_AVs": {
+              "description": "default: True"
+            },
+            "Write_Data_SPs": {
+              "description": "default: True"
+            },
+            "Write_KMC_Data": {
+              "description": "default: True"
+            },
+            "Write_Prob": {
+              "description": "default: True"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Write_SP_Summary": {
+          "description": "default: True",
+          "default": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

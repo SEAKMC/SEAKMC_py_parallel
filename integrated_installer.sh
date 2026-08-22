@@ -3,7 +3,7 @@
 # recreate_seakmc_env.sh
 # -----------------------------------------------------------------------------
 # Stands up, from a single file, a NON-CONDA Python environment that runs
-# SEAKMC_py_parallel (seakmc_p) with LAMMPS (in-process PyLammps) and OpenKIM
+# SEAKMC_py_parallel (seakmc) with LAMMPS (in-process PyLammps) and OpenKIM
 # (kim-api) potentials. Same spirit as recreate_kaltlab_env.sh: self-contained,
 # userspace, no root, exact pins where it matters.
 #
@@ -20,7 +20,7 @@
 #      collection. Individual models are added on demand (see SEAKMC_KIM_MODELS).
 #   5. LAMMPS (pinned stable release) built as a SHARED library with the
 #      PYTHON + KIM packages, MPI-enabled, installed into the venv as the
-#      `lammps` python module. MPI-enabled is REQUIRED: seakmc_p's PyLammps
+#      `lammps` python module. MPI-enabled is REQUIRED: seakmc's PyLammps
 #      runner calls lammps(comm=<split mpi4py communicator>), so LAMMPS and
 #      mpi4py MUST share the SAME MPI installation.
 #
@@ -32,7 +32,7 @@
 # USE IT (interactive shell or batch script):
 #   module load openmpi/4.1.8-gcc13              # the SAME module used to build
 #   source ~/.venvs/seakmc/bin/activate          # also pulls in kim-api + libs
-#   srun -n <N> python run_seakmc_p.py           # or: seakmc_p
+#   srun -n <N> python run_seakmc_p.py           # or: seakmc
 #
 # =============================================================================
 # CONFIGURATION -- every dependency has a LOCATION knob and a VERSION knob.
@@ -63,7 +63,7 @@
 #   SEAKMC_NUMPY_VER       (default 2.5.1)      SEAKMC_SCIPY_VER   (default 1.18.0)
 #   SEAKMC_PANDAS_VER      (default 3.0.5)      SEAKMC_MONTY_VER   (default 2026.7.16)
 #   SEAKMC_PYMATGEN_VER    (default 2026.5.4)   SEAKMC_PYYAML_VER  (default 6.0.3)
-#   SEAKMC_MPI4PY_VER      (default 3.1.6; seakmc_p requires <=3.1.6)
+#   SEAKMC_MPI4PY_VER      (default 3.1.6; seakmc requires <=3.1.6)
 #   SEAKMC_REQ_FILE        path to a requirements.txt to use INSTEAD of the
 #                          version knobs above (full control of the pin set)
 #
@@ -87,7 +87,7 @@
 #   SEAKMC_LAMMPS_CMAKE_EXTRA  extra `-D...` cmake flags, space-separated
 #   SEAKMC_SKIP_LAMMPS=1   don't build LAMMPS (also auto-skipped if no MPI found)
 #
-#   ---- seakmc_p (LOCATION + VERSION) ----------------------------------------
+#   ---- seakmc (LOCATION + VERSION) ----------------------------------------
 #   SEAKMC_SRC             source tree           (default ~/SEAKMC_py_parallel)
 #   SEAKMC_GIT             git URL               (default SEAKMC/SEAKMC_py_parallel)
 #   SEAKMC_TAG             git tag/branch/VERSION(default main)
@@ -146,7 +146,7 @@ LAMMPS_PKGS="${SEAKMC_LAMMPS_PKGS:-KIM PYTHON MANYBODY MOLECULE KSPACE EXTRA-PAI
 LAMMPS_CMAKE_EXTRA="${SEAKMC_LAMMPS_CMAKE_EXTRA:-}"
 SKIP_LAMMPS="${SEAKMC_SKIP_LAMMPS:-0}"
 
-# seakmc_p
+# seakmc
 SEAKMC_SRC="${SEAKMC_SRC:-$HOME/SEAKMC_py_parallel}"
 SEAKMC_GIT="${SEAKMC_GIT:-https://github.com/SEAKMC/SEAKMC_py_parallel.git}"
 SEAKMC_TAG="${SEAKMC_TAG:-main}"
@@ -169,7 +169,7 @@ echo "   python      : $PYTHON  (series $PBS_SERIES)"
 echo "   MPI module  : $MPI_MODULE ${EXTRA_MODULES:+(+ $EXTRA_MODULES)}"
 echo "   kim-api     : $KIM_TAG -> $KIM_PREFIX  (src $KIM_SRC)"
 echo "   LAMMPS      : $LAMMPS_TAG  [$LAMMPS_PKGS]"
-echo "   seakmc_p    : $SEAKMC_TAG  (src $SEAKMC_SRC)"
+echo "   seakmc    : $SEAKMC_TAG  (src $SEAKMC_SRC)"
 echo "   phonoLAMMPS : $([ "$INSTALL_PHONOLAMMPS" = 1 ] && echo "$PHONOLAMMPS_VER (+ phonopy $PHONOPY_VER)" || echo disabled)"
 echo "   build jobs  : $JOBS"
 echo "============================================================"
@@ -363,7 +363,7 @@ if [ "$HAVE_MPI" = "1" ]; then
         $VPY -m pip install --upgrade "setuptools==$SETUPTOOLS_SAVED" || $VPY -m pip install --upgrade setuptools
     fi
 else
-    echo "  SKIPPED (no MPI). seakmc_p cannot be imported without mpi4py."
+    echo "  SKIPPED (no MPI). seakmc cannot be imported without mpi4py."
 fi
 
 # ---------------------------------------------------------------------------
@@ -457,10 +457,10 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 7. phonoLAMMPS + seakmc_p + activation wiring + verification
+# 7. phonoLAMMPS + seakmc + activation wiring + verification
 # ---------------------------------------------------------------------------
 echo ""
-echo "[7/7] Installing phonoLAMMPS + seakmc_p and verifying..."
+echo "[7/7] Installing phonoLAMMPS + seakmc and verifying..."
 
 # --- phonoLAMMPS (phonons -> HTST/Arrhenius prefactors, via LAMMPS + phonopy) ---
 if [ "$INSTALL_PHONOLAMMPS" = "1" ]; then
@@ -473,10 +473,9 @@ else
     echo "  phonoLAMMPS: SKIPPED (SEAKMC_PHONOLAMMPS=0)."
 fi
 
-# --- seakmc_p ---
+# --- seakmc ---
 fetch_repo "$SEAKMC_SRC" "$SEAKMC_GIT" "$SEAKMC_TAG" "setup.py"
 # --no-deps: mpi4py + lammps are provided above; the rest are pinned in the venv.
-# (seakmc_p's requirements.txt also lists a bogus 'yaml>=0.2.5' that would fail.)
 if [ "$SEAKMC_EDITABLE" = "1" ]; then
     $VPY -m pip install --no-deps -e "$SEAKMC_SRC"
 else
@@ -522,9 +521,9 @@ check(["mpi4py"], optional=True)
 check(["lammps"], optional=True)
 try:
     import mpi4py  # noqa
-    check(["seakmc_p"])
+    check(["seakmc"])
 except Exception:
-    print("  --  seakmc_p    (skipped: needs mpi4py/MPI runtime)")
+    print("  --  seakmc      (skipped: needs mpi4py/MPI runtime)")
 if bad:
     print(f"\n  {len(bad)} core package(s) failed: {', '.join(bad)}"); sys.exit(1)
 print("\n  Core environment imports cleanly.")
@@ -538,9 +537,9 @@ echo " To use it (interactive shell or batch script):"
 echo "     module load $MPI_MODULE"
 for m in $EXTRA_MODULES; do echo "     module load $m"; done
 echo "     source $VENV_DIR/bin/activate"
-echo "     srun -n <N> python run_seakmc_p.py     # or: seakmc_p"
+echo "     srun -n <N> python run_seakmc_p.py     # or: seakmc"
 echo ""
-echo " OpenKIM: enable per-run in the seakmc_p input YAML (potential.OpenKIM),"
+echo " OpenKIM: enable per-run in the seakmc input YAML (potential.OpenKIM),"
 echo " and install the model first, e.g.:"
 echo "     kim-api-collections-management install user <ModelName>"
 if [ "$INSTALL_PHONOLAMMPS" = "1" ]; then

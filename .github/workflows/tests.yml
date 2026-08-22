@@ -1,0 +1,172 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The bulk of the suite needs neither MPI nor a force evaluator -- that is a
+  # deliberate property of the package, guarded by test_mpi_context.py -- so it
+  # runs on a plain interpreter across the supported range.
+  unit:
+    name: unit (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+      - name: Show resolved environment
+        run: pip list
+      - name: Run tests
+        run: pytest tests/ -v
+
+  # Guards the property that makes the above possible: importing any module
+  # must not require mpi4py or a force evaluator.
+  import-without-mpi:
+    name: imports with no MPI, no LAMMPS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - name: Install without mpi4py
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy scipy pandas pymatgen monty pyyaml pytest
+          pip install -e . --no-deps
+      - name: Confirm mpi4py really is absent
+        run: python -c "import importlib.util as u; assert u.find_spec('mpi4py') is None, 'mpi4py present; this job would not test anything'"
+      - name: Import every module
+        run: |
+          python - <<'PY'
+          import importlib, pkgutil, seakmc
+          from seakmc.mpiconf.context import mpi
+          mods = sorted(m.name for m in pkgutil.walk_packages(seakmc.__path__, "seakmc."))
+          bad = []
+          for m in mods:
+              try:
+                  importlib.import_module(m)
+              except Exception as e:
+                  bad.append((m, type(e).__name__, str(e)))
+          print(f"{len(mods)-len(bad)}/{len(mods)} modules imported; has_mpi={mpi.has_mpi}")
+          for b in bad:
+              print("FAIL", *b)
+          assert not bad
+          assert mpi.has_mpi is False and (mpi.rank, mpi.size) == (0, 1)
+          PY
+
+  # The parts that only fail under a real communicator: splitting, collectives,
+  # and the rule that one rank's error must tear down the whole job.
+  mpi:
+    name: MPI smoke (${{ matrix.nproc }} ranks)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        nproc: [1, 2, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - name: Install OpenMPI
+        run: sudo apt-get update && sudo apt-get install -y libopenmpi-dev openmpi-bin
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]" mpi4py
+      - name: Context reports a real communicator
+        run: |
+          mpirun -np ${{ matrix.nproc }} --oversubscribe python -c "
+          from seakmc.mpiconf.context import mpi
+          from seakmc.mpiconf.MPIconf import get_COMM_info
+          assert mpi.has_mpi and mpi.size == ${{ matrix.nproc }}, (mpi.has_mpi, mpi.size)
+          get_COMM_info(1)
+          print('rank', mpi.rank, 'of', mpi.size, 'ok')"
+      - name: A failing rank aborts the job rather than hanging its peers
+        if: matrix.nproc != 1
+        timeout-minutes: 2
+        run: |
+          cat > /tmp/onefail.py <<'PY'
+          import seakmc.cli as cli
+          from seakmc.mpiconf.context import mpi
+          from seakmc.mpiconf.error_exit import error_exit
+          def run():
+              if mpi.rank == 0:
+                  error_exit("only rank 0 fails")
+              mpi.comm.Barrier()
+              raise SystemExit("a peer passed the barrier -- the job hung instead of aborting")
+          cli.run = run
+          cli.main()
+          PY
+          if mpirun -np ${{ matrix.nproc }} --oversubscribe python /tmp/onefail.py; then
+            echo "expected a non-zero exit"; exit 1
+          fi
+          echo "job terminated as expected"
+
+  schema-current:
+    name: committed schema is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+      # schema/input.schema.json and docs/input_reference.md are generated from
+      # the settings defaults. If someone adds a setting to the parser without
+      # regenerating them, the schema silently stops recognising it and the
+      # reference silently omits it -- exactly the drift a generated artifact
+      # is supposed to prevent. Regenerate and require no diff.
+      - name: Regenerate and compare
+        run: |
+          cd examples/Fe_vacancy
+          python -m seakmc schema -o "$GITHUB_WORKSPACE/schema/input.schema.json"
+          python -m seakmc schema --markdown -o "$GITHUB_WORKSPACE/docs/input_reference.md"
+          cd "$GITHUB_WORKSPACE"
+          if ! git diff --quiet -- schema/ docs/; then
+            echo "::error::schema/ or docs/ is out of date. Regenerate with:"
+            echo "  cd examples/Fe_vacancy && seakmc schema -o ../../schema/input.schema.json"
+            echo "  cd examples/Fe_vacancy && seakmc schema --markdown -o ../../docs/input_reference.md"
+            git diff --stat -- schema/ docs/
+            exit 1
+          fi
+          echo "schema and reference document are current"
+
+  lint:
+    name: ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install ruff
+      # Unused imports (F401) and empty f-strings (F541) are now clean and
+      # gated. Bare `except:` is gone too -- all 47 became `except Exception:`,
+      # which no longer swallows KeyboardInterrupt or SystemExit.
+      #
+      # F841 (unused locals) is deliberately NOT gated. Several of those
+      # assignments have side-effecting right-hand sides -- DataSPS.py:777 is
+      # `color_rec = mpi.comm.recv(...)`, whose call must execute to keep the
+      # master/slave message ordering correct. Deleting the binding would
+      # corrupt the MPI protocol for a cosmetic gain, and ruff itself marks
+      # these fixes unsafe. They need reading one at a time.
+      - run: >
+          ruff check seakmc/ tests/ --output-format=github
+          --select F401,F541,F821,F811,F823,F402,F502,F506,F601,F602,F631,F632,F701,F702,E722,E9

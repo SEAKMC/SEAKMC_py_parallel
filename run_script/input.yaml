@@ -1,5 +1,6 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SEAKMC/SEAKMC_py_parallel/main/schema/input.schema.json
 system:
-    Inteval4ShowProgress: 10
+    Interval4ShowProgress: 10
     Restart:
         LoadRestart: True
         LoadFile: False
@@ -30,7 +31,7 @@ potential:
     FileName: Fe-P.eam.fs
     Path2Pot: False
     pair_coeff: False
-    cutneighmax: max(bondlengths)*1.1
+    # cutneighmax: <float>  # default: max(bondlengths)*1.1
     OpenKIM:
       OpenKIM: False
       kim_init: False
@@ -57,9 +58,9 @@ force_evaluator:
     nproc4ReCal: auto
     TrialDisps2Basin:
         TrialDisps2Basin: False
-        Rinput4TDB: filename for TrialDisps2Basin
-        Ref_Length: must manually set in Angstrom
-        Target_StrainRate: must manually set in 1/s
+        # Rinput4TDB: <filename>
+        # Ref_Length: <float>   # Angstrom
+        # Target_StrainRate: <float>  # 1/s
         Disps:
             - 0.001
             - 0.002
@@ -67,15 +68,17 @@ force_evaluator:
             - 0.008
         MinDisp: 0.0001
         MaxDisp: 0.01
-        StrainRateType: 1 for positive 0 for negative
+        # StrainRateType: 1   # 1 positive, 0 negative
         Keys4ImportValue4RinputTDB:
             - displacement equal, displacement
-    OutFileHeader:
+    OutFileHeaders:
         - None
     ImportValue4RinputOpt: False
     Keys4ImportValue4RinputOpt:
         - Timestep, time_step
-    GPU: None
+    # GPU:                    # list of LAMMPS accelerator flags, e.g.
+    #   - -sf, gpu
+    #   - -pk, gpu 1
 data:
     atom_style: atomic
     FileName: data.small.dat
@@ -86,7 +89,7 @@ data:
     RinputMD0: False
     RinputOpt: False
     boundary: "p p p"
-    dimensions: 3
+    dimension: 3
     units: metal
 kinetic_MC:
     NSteps: 1
@@ -203,10 +206,10 @@ saddle_point:
         Tol4AVSP: 0.1
         NMax4Dup: 600
         NCommonMin: 10
-        R2Dmax4tol: 0.1
+        R2Dmax4Tol: 0.1
         Tol4Disp: 0.1
         GroupSP: False
-        Angcut4GSP: 10.0
+        AngCut4GSP: 10.0
         MagCut4GSP: 0.1
         EnCut4GSP: 0.1
         FindSPType: False
@@ -235,16 +238,16 @@ active_volume:
     FindDefects:
           DiscardType: NA
           Method: BLCN
-          ReferenceData: optional entry
+          # ReferenceData: <filename>
           atom_style4Ref: atomic
           DCut4Def: 0.1
-          Defects: required entry for custom Method
-            - x, y, z cartesian coordinates
-    DActive: cutdefectmax*2.7
-    DBuffer: cutdefectmax*1.5
-    DFixed: cutdefectmax*4.1
+          # Defects:   # required when Method is custom
+          #   - x, y, z
+    # DActive: <float>   # default: cutdefectmax*2.7
+    # DBuffer: <float>   # default: cutdefectmax*1.5
+    # DFixed: <float>    # default: cutdefectmax*4.1
     Overlapping: True
-    DCut4noOverlap: 8.4*cutdefectmax
+    # DCut4noOverlap: <float>  # default: 8.4*cutdefectmax
     Stack4noOverlap: False
     NMax4Def: False
     NMax4AV: False
@@ -264,9 +267,9 @@ active_volume:
     SortingBuffer: False
     SortingFixed: False
     NMin_perproc: 5
-    NActive: required for "custom" Style
-    NBuffer: optional for "custom" Style
-    NFixed: optional for "custom" Style
+    # NActive: <int>     # required when Style is \"custom\"
+    # NBuffer: <int>     # optional when Style is \"custom\"
+    # NFixed: <int>      # optional when Style is \"custom\"
     TurnoffPBC:
       - False
       - False
