@@ -38,9 +38,14 @@ def test_message_is_preserved():
 
 
 def test_too_few_cores_is_reported_not_aborted():
-    """MPIconf previously called MPI.Abort() directly for this condition."""
+    """MPIconf previously called MPI.Abort() directly for this condition.
+
+    Uses the lazy MPI context rather than importing mpi4py, which would defeat
+    the point: this suite must run where no MPI runtime exists. Importing
+    mpi4py here failed CI on every Python version -- 965 passed, this one
+    errored with "cannot load MPI library".
+    """
+    from seakmc.mpiconf.context import mpi
     from seakmc.mpiconf.MPIconf import get_ntask_time
-    from mpi4py import MPI
-    size = MPI.COMM_WORLD.Get_size()
     with pytest.raises(SeakmcError, match="number of cores"):
-        get_ntask_time(size + 8)
+        get_ntask_time(mpi.size + 8)

@@ -25,6 +25,24 @@ from seakmc.input.validate import (
 
 SCHEMA_ID = "https://github.com/SEAKMC/SEAKMC_py_parallel/schema/input.schema.json"
 
+#: Defaults computed from the interatomic potential rather than fixed in the
+#: source: cutdefectmax comes from pymatgen's bond-length tables for the
+#: species in use, and these are multiples of it (Input.py:543-550, 781).
+#: Their numeric value depends on the input file AND on the installed pymatgen
+#: version, so writing it into a committed artifact makes the file unstable --
+#: the drift check would then fail on an unrelated dependency bump rather than
+#: on a real change. The keys are still declared; only the value is withheld.
+DERIVED_DEFAULTS = {
+    ("active_volume", "cutdefectmax"),
+    ("active_volume", "DActive"),
+    ("active_volume", "DBuffer"),
+    ("active_volume", "DFixed"),
+    ("active_volume", "DCut4PDR"),
+    ("active_volume", "DCut4noOverlap"),
+    ("saddle_point", "DAtomCut"),
+    ("potential", "cutneighmax"),
+}
+
 
 def _describe(value):
     """A short human note about a default, including what a sentinel means."""
@@ -45,6 +63,10 @@ def _properties_for(section, defaults, merged):
     props = {}
     for key in sorted(defaults):
         value = merged.get(key)
+        if (section, key) in DERIVED_DEFAULTS:
+            props[key] = {"description": "derived from the interatomic potential "
+                                         "(a multiple of cutdefectmax); omit to accept it"}
+            continue
         entry = {"description": _describe(value)}
         if isinstance(value, dict):
             entry["type"] = "object"

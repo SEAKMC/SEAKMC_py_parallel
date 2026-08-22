@@ -47,11 +47,11 @@ no defaults registry; keys are not checked
 
 | setting | notes |
 |---|---|
-| `DActive` | default: 7.7 -- must be a number |
-| `DBuffer` | default: 3.0 -- must be a number |
-| `DCut4PDR` | default: 4.0 -- must be a number |
-| `DCut4noOverlap` | default: 24.75 -- must be a number |
-| `DFixed` | default: 10 -- must be a number |
+| `DActive` | derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it |
+| `DBuffer` | derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it |
+| `DCut4PDR` | derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it |
+| `DCut4noOverlap` | derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it |
+| `DFixed` | derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it |
 | `DefectCenter4RT_SetMolID` | default: 'AUTO' |
 | `Exclusive` | default: True |
 | `FCT4RT_SetMolID` | list, default: ['INF', 'INF', 'INF', 'INF', 'INF', 'INF'] |
@@ -88,7 +88,7 @@ no defaults registry; keys are not checked
 | `SortingSpacer` | list, default: [0.3, 0.3, 0.3] |
 | `Stack4noOverlap` | default: False (unset; may also take a value) |
 | `Style` | default: 'defects' |
-| `cutdefectmax` | default: 2.75 |
+| `cutdefectmax` | derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it |
 | `NActive` | supplied by the user; no default |
 | `NBuffer` | supplied by the user; no default |
 | `NFixed` | supplied by the user; no default |
@@ -213,7 +213,7 @@ no defaults registry; keys are not checked
 | `BarrierMin` | default: 0.0 -- must be a number |
 | `CalBarrsInData` | default: False (unset; may also take a value) |
 | `CalEbiasInData` | default: False (unset; may also take a value) |
-| `DAtomCut` | default: 2.75 |
+| `DAtomCut` | derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it |
 | `DmagCut` | default: "NA" (no limit) |
 | `DmagCut_FI` | default: "NA" (no limit) |
 | `DmagCut_FS` | default: "NA" (no limit) |

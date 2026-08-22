@@ -119,24 +119,19 @@
       "type": "object",
       "properties": {
         "DActive": {
-          "description": "default: 7.7 -- must be a number",
-          "default": 7.7
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
         },
         "DBuffer": {
-          "description": "default: 3.0 -- must be a number",
-          "default": 3.0
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
         },
         "DCut4PDR": {
-          "description": "default: 4.0 -- must be a number",
-          "default": 4.0
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
         },
         "DCut4noOverlap": {
-          "description": "default: 24.75 -- must be a number",
-          "default": 24.75
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
         },
         "DFixed": {
-          "description": "default: 10 -- must be a number",
-          "default": 10
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
         },
         "DefectCenter4RT_SetMolID": {
           "description": "default: 'AUTO'",
@@ -301,8 +296,7 @@
           "default": "defects"
         },
         "cutdefectmax": {
-          "description": "default: 2.75",
-          "default": 2.75
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
         },
         "NActive": {
           "description": "supplied by the user; no default"
@@ -722,8 +716,7 @@
           "default": false
         },
         "DAtomCut": {
-          "description": "default: 2.75",
-          "default": 2.75
+          "description": "derived from the interatomic potential (a multiple of cutdefectmax); omit to accept it"
         },
         "DmagCut": {
           "description": "default: \"NA\" (no limit)",
