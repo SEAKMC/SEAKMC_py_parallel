@@ -66,12 +66,77 @@ def validate_only(inputf="input.yaml"):
     return 0
 
 
+def emit_schema(inputf="input.yaml", markdown=False, out=None):
+    """Print the JSON Schema, or the reference document, for the settings."""
+    from seakmc.input.Input import Settings
+    from seakmc.input.schema import reference_markdown, schema_json
+    sett = Settings.from_file(inputf)
+    text = reference_markdown(sett) if markdown else schema_json(sett)
+    if out:
+        with open(out, "w") as f:
+            f.write(text + "\n")
+        print(f"written: {out}")
+    else:
+        print(text)
+    return 0
+
+
+def migrate(target="input.yaml", in_place=False):
+    """Rewrite an older input file onto current key names."""
+    from seakmc.input.migrate import migrate_file
+    new, changes = migrate_file(target, in_place=in_place)
+    if not changes:
+        print(f"{target}: nothing to migrate")
+        return 0
+    for c in changes:
+        print(f"  {c}")
+    if in_place:
+        print(f"{target}: {len(changes)} change(s) applied (original kept as {target}.bak)")
+    else:
+        print(f"\n{target}: {len(changes)} change(s) needed. "
+              f"Re-run with --in-place to apply them.")
+    return 0
+
+
+USAGE = """usage: seakmc [command]
+
+  (no command)          run the simulation described by input.yaml
+  validate [FILE]       check an input file and report problems
+  schema [FILE]         print the JSON Schema for the settings
+    --markdown            print the reference document instead
+    -o FILE               write to FILE instead of stdout
+  migrate [FILE]        rewrite an older input file onto current key names
+    --in-place            apply the changes (keeps FILE.bak)
+"""
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
-    if argv and argv[0] == "validate":
-        target = argv[1] if len(argv) > 1 else "input.yaml"
+    cmd = argv[0] if argv else None
+
+    if cmd in ("-h", "--help", "help"):
+        print(USAGE)
+        return
+
+    if cmd in ("validate", "schema", "migrate"):
+        rest = argv[1:]
+        flags = [a for a in rest if a.startswith("-")]
+        files = [a for a in rest if not a.startswith("-")]
+        target = files[0] if files else "input.yaml"
         try:
-            validate_only(target)
+            if cmd == "validate":
+                validate_only(target)
+            elif cmd == "schema":
+                out = None
+                if "-o" in rest:
+                    i = rest.index("-o")
+                    out = rest[i + 1] if i + 1 < len(rest) else None
+                    if out in files:
+                        files.remove(out)
+                        target = files[0] if files else "input.yaml"
+                emit_schema(target, markdown="--markdown" in flags, out=out)
+            else:
+                migrate(target, in_place="--in-place" in flags)
         except SeakmcError as e:
             print(f"\n{e}", file=sys.stderr, flush=True)
             sys.exit(1)
@@ -79,6 +144,7 @@ def main(argv=None):
             print(f"No such input file: {target}", file=sys.stderr, flush=True)
             sys.exit(1)
         return
+
     try:
         run()
     except SeakmcError as e:

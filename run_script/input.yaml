@@ -75,7 +75,9 @@ force_evaluator:
     ImportValue4RinputOpt: False
     Keys4ImportValue4RinputOpt:
         - Timestep, time_step
-    GPU: None
+    # GPU:                    # list of LAMMPS accelerator flags, e.g.
+    #   - -sf, gpu
+    #   - -pk, gpu 1
 data:
     atom_style: atomic
     FileName: data.small.dat
@@ -203,10 +205,10 @@ saddle_point:
         Tol4AVSP: 0.1
         NMax4Dup: 600
         NCommonMin: 10
-        R2Dmax4tol: 0.1
+        R2Dmax4Tol: 0.1
         Tol4Disp: 0.1
         GroupSP: False
-        Angcut4GSP: 10.0
+        AngCut4GSP: 10.0
         MagCut4GSP: 0.1
         EnCut4GSP: 0.1
         FindSPType: False

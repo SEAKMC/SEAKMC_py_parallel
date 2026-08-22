@@ -60,7 +60,7 @@ dependencies = [
 # is offered here only as a convenience.
 [project.optional-dependencies]
 lammps = ["lammps>=2023.03.28"]
-test = ["pytest>=7.0"]
+test = ["pytest>=7.0", "jsonschema>=4.0"]
 all = ["seakmc[lammps,test]"]
 
 [project.scripts]

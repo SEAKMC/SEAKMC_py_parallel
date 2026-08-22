@@ -3,7 +3,7 @@ system:
         LoadRestart: False
         LoadFile: False
         WriteRestart: False
-        KMCstep4Restart: 1
+        KMCStep4Restart: 1
         Reset_Simulation_Time: False
     significant_figures: 6
 potential:

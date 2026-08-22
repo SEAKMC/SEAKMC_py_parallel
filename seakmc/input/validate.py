@@ -37,6 +37,12 @@ REQUIRED_USER_KEYS = {
     "active_volume": ("NActive", "NBuffer", "NFixed", "TurnoffPBC"),
 }
 
+# Nested keys the parser reads but never seeds with a default, so they do not
+# appear in the defaults snapshot. Verified present in the source.
+NESTED_USER_KEYS = {
+    ("active_volume", "FindDefects"): ("atom_style4Ref", "ReferenceData", "Defects"),
+}
+
 NUMERIC_KEYS = {
     "active_volume": ("DActive", "DBuffer", "DFixed", "DCut4PDR", "DCut4noOverlap",
                       "NMin4AV", "NMin_perproc", "R4RT_SetMolID"),
@@ -92,8 +98,9 @@ def check_unknown_keys(parameters, settings):
                 # One level of nesting, where the default is itself a mapping.
                 sub_default = merged.get(key) if isinstance(merged, dict) else None
                 if isinstance(value, dict) and isinstance(sub_default, dict):
+                    allowed = set(sub_default) | set(NESTED_USER_KEYS.get((sec, key), ()))
                     for sub in value:
-                        if sub not in sub_default:
+                        if sub not in allowed:
                             hint = _suggest(sub, sub_default)
                             problems.append(
                                 f"{sec}.{key}.{sub} is not a recognised setting"
