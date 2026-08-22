@@ -8,7 +8,7 @@ import numpy as np
 from numpy import pi
 import pandas as pd
 import copy
-from typing import Optional, Tuple
+from typing import Tuple
 from monty.json import MSONable
 
 from pymatgen.core.periodic_table import Element
@@ -159,7 +159,7 @@ class SeakmcData(LammpsData, MSONable):
         self.natoms = len(self.atoms)
         try:
             self.idmax = self.atoms.index.max()
-        except:
+        except Exception:
             logstr = "The input data have no atom ID."
             error_exit(logstr)
 
@@ -191,11 +191,11 @@ class SeakmcData(LammpsData, MSONable):
         self.PBC = [True, True, True]
         try:
             self.dimension = self.sett.data["dimension"]
-        except:
+        except Exception:
             pass
         try:
             self.PBC = copy.deepcopy(self.sett.data["PBC"])
-        except:
+        except Exception:
             pass
 
     def to_atom_style(self):
@@ -237,9 +237,9 @@ class SeakmcData(LammpsData, MSONable):
             idmols = np.compress(idmols < 0, idmols)
             idmols = np.unique(idmols)
             if len(idmols) > 0:
-                logstr = f"Number of predefined defects is 0 in input.yaml!"
+                logstr = "Number of predefined defects is 0 in input.yaml!"
                 logstr += "\n" + f"But found {len(idmols)} predefined defects in data file!"
-                logstr += "\n" + f"Reset NPredef in active_volume of input.yaml and rerun the code."
+                logstr += "\n" + "Reset NPredef in active_volume of input.yaml and rerun the code."
                 error_exit(logstr)
 
     def insert_cusatoms(self, Sort_by='type', Ascending=True):
@@ -698,7 +698,7 @@ class SeakmcData(LammpsData, MSONable):
                         try:
                             thisq = self.atoms.iloc[nr]["q"]
                             if abs(thisq - qtype) >= self.sett.potential['qtolerances'][thistype]: isdefect = True
-                        except:
+                        except Exception:
                             pass
 
                     if not isdefect:
@@ -1727,7 +1727,7 @@ class SeakmcData(LammpsData, MSONable):
         if not isinstance(nout, int): nout = self.natoms
         try:
             species = np.array(self.sett.potential["species"])
-        except:
+        except Exception:
             species = self.get_species_from_masses()
         types = self.atoms['type'].to_numpy().astype(int) - 1
         coords = np.vstack((self.atoms['x'], self.atoms['y'], self.atoms['z']))
@@ -1741,7 +1741,7 @@ class SeakmcData(LammpsData, MSONable):
         lattice = self.box.to_lattice()
         try:
             species = np.array(self.sett.potential["species"])
-        except:
+        except Exception:
             species = self.get_species_from_masses()
         types = self.atoms['type'].to_numpy().astype(int) - 1
         coords = np.vstack((self.atoms['x'], self.atoms['y'], self.atoms['z']))
@@ -1788,7 +1788,7 @@ class SeakmcData(LammpsData, MSONable):
         else:
             try:
                 idavs = np.array([int(idavs)], dtype=int)
-            except:
+            except Exception:
                 logstr = "idavs must be integer or list of integers or 'ALL'."
                 error_exit(logstr)
 
@@ -2504,11 +2504,11 @@ class ActiveVolume(SeakmcData, MSONable):
         self.PBC = [True, True, True]
         try:
             self.dimension = self.sett.data["dimension"]
-        except:
+        except Exception:
             pass
         try:
             self.PBC = copy.deepcopy(self.sett.data["PBC"])
-        except:
+        except Exception:
             pass
 
         try:
@@ -2532,7 +2532,7 @@ class ActiveVolume(SeakmcData, MSONable):
                     self.box.tilt[2] = 0.0
                     self.PBC[2] = False
                 self.box = SeakmcBox(self.box.bounds, self.box.tilt)
-        except:
+        except Exception:
             pass
 
     def __str__(self):
@@ -2793,7 +2793,7 @@ class ActiveVolume(SeakmcData, MSONable):
                             ind_entry.append(thisind)
                             minvals.append(dispsett[DispSettKEY[1]][ien][0])
                             maxvals.append(dispsett[DispSettKEY[1]][ien][1])
-                        except:
+                        except Exception:
                             pass
 
                     newxyzs = copy.deepcopy(xyzs)

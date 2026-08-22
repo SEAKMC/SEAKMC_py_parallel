@@ -119,6 +119,36 @@ jobs:
           fi
           echo "job terminated as expected"
 
+  schema-current:
+    name: committed schema is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+      # schema/input.schema.json and docs/input_reference.md are generated from
+      # the settings defaults. If someone adds a setting to the parser without
+      # regenerating them, the schema silently stops recognising it and the
+      # reference silently omits it -- exactly the drift a generated artifact
+      # is supposed to prevent. Regenerate and require no diff.
+      - name: Regenerate and compare
+        run: |
+          cd examples/Fe_vacancy
+          python -m seakmc schema -o "$GITHUB_WORKSPACE/schema/input.schema.json"
+          python -m seakmc schema --markdown -o "$GITHUB_WORKSPACE/docs/input_reference.md"
+          cd "$GITHUB_WORKSPACE"
+          if ! git diff --quiet -- schema/ docs/; then
+            echo "::error::schema/ or docs/ is out of date. Regenerate with:"
+            echo "  cd examples/Fe_vacancy && seakmc schema -o ../../schema/input.schema.json"
+            echo "  cd examples/Fe_vacancy && seakmc schema --markdown -o ../../docs/input_reference.md"
+            git diff --stat -- schema/ docs/
+            exit 1
+          fi
+          echo "schema and reference document are current"
+
   lint:
     name: ruff
     runs-on: ubuntu-latest
@@ -127,14 +157,16 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install ruff
-      # Correctness rules only. The tree predates linting and still carries a
-      # hygiene backlog (8 unused imports, 26 empty f-strings, 27 unused
-      # locals) that is not worth gating a merge on. This set catches the
-      # things that are actually bugs -- undefined names, redefinitions,
-      # comparison and syntax errors. It found one on its first run:
-      # SeakmcBox.angles called mat_angles(m) with m undefined, so that
-      # property and is_orthogonal raised NameError on every access.
-      # Tighten toward the full F set as the backlog is cleared.
+      # Unused imports (F401) and empty f-strings (F541) are now clean and
+      # gated. Bare `except:` is gone too -- all 47 became `except Exception:`,
+      # which no longer swallows KeyboardInterrupt or SystemExit.
+      #
+      # F841 (unused locals) is deliberately NOT gated. Several of those
+      # assignments have side-effecting right-hand sides -- DataSPS.py:777 is
+      # `color_rec = mpi.comm.recv(...)`, whose call must execute to keep the
+      # master/slave message ordering correct. Deleting the binding would
+      # corrupt the MPI protocol for a cosmetic gain, and ruff itself marks
+      # these fixes unsafe. They need reading one at a time.
       - run: >
           ruff check seakmc/ tests/ --output-format=github
-          --select F821,F811,F823,F402,F502,F506,F601,F602,F631,F632,F701,F702,E9
+          --select F401,F541,F821,F811,F823,F402,F502,F506,F601,F602,F631,F632,F701,F702,E722,E9

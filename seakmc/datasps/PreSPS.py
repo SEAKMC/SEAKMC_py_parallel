@@ -37,7 +37,7 @@ def load_DefectBanks(DBsett, DBLoadpath, significant_figures=6):
                                                namax=DBsett["NMax4DB"], namin=DBsett["NMin4DB"],
                                                SortDisps=DBsett["SortDisps"], significant_figures=significant_figures)
                 if isinstance(thisDB, DefectBank): DefectBank_list.append(thisDB)
-            except:
+            except Exception:
                 pass
     return DefectBank_list
 

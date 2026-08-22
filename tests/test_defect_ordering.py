@@ -13,7 +13,6 @@ and for a symmetric defect every entry ties, leaving the incoming order.
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from seakmc.core.data import SeakmcData
 

@@ -86,7 +86,7 @@ class VaspRunner(object):
                 total_energy = self.get_total_energy()
                 if total_energy == 0:
                     isValid = False
-                    errormsg = f"Error on getting energy in VASP!"
+                    errormsg = "Error on getting energy in VASP!"
                     errormsg += ("\n" +
                                  f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
 
@@ -95,7 +95,7 @@ class VaspRunner(object):
                     relaxed_coords = self.get_relaxed_coords()
                     if len(relaxed_coords) == 0:
                         isValid = False
-                        errormsg = f"Error on getting coordinates in VASP!"
+                        errormsg = "Error on getting coordinates in VASP!"
                         errormsg += ("\n" +
                                      f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
                 else:
@@ -144,10 +144,10 @@ class VaspRunner(object):
         try:
             subprocess.call([os.path.join(self.path_to_callscript, self.callscript), job_dir_path], stdout=devnull,
                             stderr=devnull)
-        except:
+        except Exception:
             if rank_local == 0:
                 isValid = False
-                errormsg = f"Error on initializing VASP!"
+                errormsg = "Error on initializing VASP!"
                 errormsg += ("\n" +
                              f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
 
@@ -156,7 +156,7 @@ class VaspRunner(object):
                 total_energy = self.get_total_energy()
                 if total_energy == 0:
                     isValid = False
-                    errormsg = f"Error on getting energy in VASP!"
+                    errormsg = "Error on getting energy in VASP!"
                     errormsg += ("\n" +
                                  f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
         else:
@@ -209,14 +209,14 @@ class VaspRunner(object):
                 total_energy = self.get_total_energy()
                 if total_energy == 0:
                     isValid = False
-                    errormsg = f"Error on getting energy in VASP!"
+                    errormsg = "Error on getting energy in VASP!"
                     errormsg += ("\n" +
                                  f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
             if isValid:
                 forces = self.get_forces()
                 if len(forces) == 0:
                     isValid = False
-                    errormsg = f"Error on getting forces in VASP!"
+                    errormsg = "Error on getting forces in VASP!"
                     errormsg += ("\n" +
                                  f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
         else:
@@ -298,7 +298,7 @@ class VaspRunner(object):
         if nactive is None:
             try:
                 nactive = data.nactive
-            except:
+            except Exception:
                 nactive = data.natoms
         lines = []
         ###add "\n" at the end of each line
@@ -338,7 +338,7 @@ class VaspRunner(object):
                         with open(os.path.join(self.path_to_pot, "POTCAR" + "_" + symbol), 'r') as potcar_file:
                             for line in potcar_file:
                                 this_potcar_file.write(line)
-                    except:
+                    except Exception:
                         print(f"Cannot find {os.path.join(self.path_to_pot, 'POTCAR' + '_' + symbol)} POTCAR!")
                         quit()
         else:

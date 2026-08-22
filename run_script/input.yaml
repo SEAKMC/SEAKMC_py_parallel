@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SEAKMC/SEAKMC_py_parallel/main/schema/input.schema.json
 system:
     Interval4ShowProgress: 10
     Restart:

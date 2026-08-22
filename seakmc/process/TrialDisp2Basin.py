@@ -206,7 +206,7 @@ class TrialDisps:
             try:
                 popt, pcov = curve_fit(func1, x, y)
                 isValid = True
-            except:
+            except Exception:
                 popt = np.array([0.0, 0.0])
                 isValid = False
         return isValid, popt

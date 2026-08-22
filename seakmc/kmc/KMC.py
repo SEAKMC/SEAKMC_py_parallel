@@ -186,7 +186,7 @@ class SuperBasin:
                     try:
                         idx = np.where(thistags == lastatomid)
                         idx = idx[0][0]
-                    except:
+                    except Exception:
                         idx = -1
                     if idx != -1:
                         commons, lastind, thisind = np.intersect1d(lasttags, thistags, return_indices=True)

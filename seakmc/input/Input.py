@@ -98,7 +98,7 @@ def get_avg_bond_length(sp1, sp2):
             bls += bl
             n += 1
         return bls / max(n, 1)
-    except:
+    except Exception:
         r1 = sp1.atomic_radius
         r2 = sp2.atomic_radius
         if r1 is None: r1 = 2.0
@@ -112,7 +112,7 @@ def get_bo_one_length(sp1, sp2):
     try:
         all_lengths = obtain_all_bond_lengths(sp1, sp2)
         return all_lengths["1"]
-    except:
+    except Exception:
         r1 = sp1.atomic_radius
         r2 = sp2.atomic_radius
         if r1 is None: r1 = 2.0
@@ -278,7 +278,7 @@ class Settings:
                                 try:
                                     thiskeylist = [thislines[0].strip(), thislines[1].strip()]
                                     keys4IVTDB.append(thiskeylist)
-                                except:
+                                except Exception:
                                     pass
                             thisfeval[key][subkey] = keys4IVTDB
                         else:
@@ -290,7 +290,7 @@ class Settings:
                         try:
                             thiskeylist = [thislines[0].strip(), thislines[1].strip()]
                             keys4IV.append(thiskeylist)
-                        except:
+                        except Exception:
                             pass
                     thisfeval[key] = keys4IV
                 else:
@@ -422,7 +422,7 @@ class Settings:
                     jele = int(thisstr[1].strip()) - 1
                     bondlengths[iele][jele] = float(thisstr[2].strip())
                     bondlengths[jele][iele] = bondlengths[iele][jele]
-                except:
+                except Exception:
                     pass
 
         cutneighs = bondlengths * 1.1
@@ -435,7 +435,7 @@ class Settings:
                     jele = int(thisstr[1].strip()) - 1
                     cutneighs[iele][jele] = float(thisstr[2].strip())
                     cutneighs[jele][iele] = cutneighs[iele][jele]
-                except:
+                except Exception:
                     pass
 
         if 'coordnums' in potential:
@@ -446,9 +446,9 @@ class Settings:
                     iele = int(thisstr[0].strip()) - 1
                     try:
                         coordnums[iele] = float(thisstr[1].strip())
-                    except:
+                    except Exception:
                         coordnums[iele] = np.nan
-                except:
+                except Exception:
                     pass
 
         if 'charges' in potential:
@@ -458,7 +458,7 @@ class Settings:
                 try:
                     iele = int(thisstr[0].strip()) - 1
                     charges[iele] = float(thisstr[1].strip())
-                except:
+                except Exception:
                     pass
 
         if 'qtolerances' in potential:
@@ -468,7 +468,7 @@ class Settings:
                 try:
                     iele = int(thisstr[0].strip()) - 1
                     qtolerances[iele] = float(thisstr[1].strip())
-                except:
+                except Exception:
                     pass
 
         if 'masses' in potential:
@@ -481,18 +481,18 @@ class Settings:
                     if itype < ntype:
                         try:
                             masses[itype] = float(thisstr[1].strip())
-                        except:
+                        except Exception:
                             pass
                     else:
                         pass
-                except:
+                except Exception:
                     pass
 
         cutneighmax = max(cutneighs.flatten())
         if 'cutneighmax' in potential:
             try:
                 cutneighmax = float(potential['cutneighmax'])
-            except:
+            except Exception:
                 pass
 
         bondlengths4LAS = copy.deepcopy(bondlengths)
@@ -505,7 +505,7 @@ class Settings:
                     jele = int(thisstr[1].strip()) - 1
                     bondlengths4LAS[iele][jele] = float(thisstr[2].strip())
                     bondlengths4LAS[jele][iele] = bondlengths4LAS[iele][jele]
-                except:
+                except Exception:
                     pass
 
         coordnums4LAS = copy.deepcopy(coordnums)
@@ -516,7 +516,7 @@ class Settings:
                 try:
                     iele = int(thisstr[0].strip()) - 1
                     coordnums4LAS[iele] = float(thisstr[1].strip())
-                except:
+                except Exception:
                     pass
 
         potential["species"] = symbols
@@ -575,7 +575,7 @@ class Settings:
                 else:
                     try:
                         discardtypes.append(int(active_volume["FindDefects"]["DiscardType"]))
-                    except:
+                    except Exception:
                         pass
                 active_volume["FindDefects"]["DiscardType"] = discardtypes
 
@@ -596,7 +596,7 @@ class Settings:
                             try:
                                 xyz = [float(thisdefect[0]), float(thisdefect[1]), float(thisdefect[2])]
                                 defects.append(xyz)
-                            except:
+                            except Exception:
                                 pass
                     if len(defects) <= 0:
                         logstr = "Must input coordinates of defects for custom FindDefect!"
@@ -740,7 +740,7 @@ class Settings:
             if "Temp4Time" not in KMC:
                 try:
                     thisKMC["Temp4Time"] = KMC["Temp"]
-                except:
+                except Exception:
                     pass
         #################################################################################
         thisDynMat = {"SNC": False, "NMax4SNC": 1000, "displacement": 0.000001,
@@ -810,11 +810,11 @@ class Settings:
 
         try:
             nScreenDisp = int(thissp["ValidSPs"]["NScreenDisp"])
-        except:
+        except Exception:
             nScreenDisp = 0
         try:
             nScreenEng = int(thissp["ValidSPs"]["NScreenEng"])
-        except:
+        except Exception:
             nScreenEng = 0
 
         if nScreenDisp > 0:
@@ -873,7 +873,7 @@ class Settings:
                     for i in range(len(tmps)):
                         try:
                             tmpl.append(int(tmps[i].strip()))
-                        except:
+                        except Exception:
                             pass
                     visual["Write_Data_SPs"]["Sel_iSPs"] = tmpl
 
@@ -908,16 +908,16 @@ class Settings:
             problems = validate(raw, self, strict=strict)
         if self.force_evaluator["Style"].upper() == "VASP":
             if mpi.rank == 0:
-                logstr = f"The binary file for VASP style is 'callvasp', which is a submission script!"
-                logstr += "\n" + f"Use the absolute path in 'Path2Pot' in potential!"
-                logstr += "\n" + f"INCAR files should be provided for the correspond places with the header 'Rinput'!"
-                logstr += "\n" + f"The force_evaluator-RinputOpt as 'INCAR_Opt' for relaxating between KMC steps."
-                logstr += "\n" + f"The spsearch-force_evaluator-Rinput as 'INCAR_SPS' for SPS."
-                logstr += "\n" + f"Two sets of KPOINTS_DATA, KPOINTS_SPS must be provided, "
-                logstr += "\n" + f"where DATA is referred to the whole data and SPS is refrred to the AV for SPS."
+                logstr = "The binary file for VASP style is 'callvasp', which is a submission script!"
+                logstr += "\n" + "Use the absolute path in 'Path2Pot' in potential!"
+                logstr += "\n" + "INCAR files should be provided for the correspond places with the header 'Rinput'!"
+                logstr += "\n" + "The force_evaluator-RinputOpt as 'INCAR_Opt' for relaxating between KMC steps."
+                logstr += "\n" + "The spsearch-force_evaluator-Rinput as 'INCAR_SPS' for SPS."
+                logstr += "\n" + "Two sets of KPOINTS_DATA, KPOINTS_SPS must be provided, "
+                logstr += "\n" + "where DATA is referred to the whole data and SPS is refrred to the AV for SPS."
                 logstr += ("\n" +
-                           f"The potential-FileName is not a string, provide the POTCAR_symbol in potential-Path2Pot!")
-                logstr += "\n" + f"Code will generate POTCAR based on input structure!"
+                           "The potential-FileName is not a string, provide the POTCAR_symbol in potential-Path2Pot!")
+                logstr += "\n" + "Code will generate POTCAR based on input structure!"
                 print(logstr)
 
         KB = 8.617333262145e-5
@@ -932,7 +932,7 @@ class Settings:
                 temp = self.kinetic_MC['Temp']
                 prefactor = self.saddle_point['Prefactor']
                 barr = np.log(Max_timestep * prefactor * 1.0e12) * temp * KB
-                logstr = f"the TrialDisps2Basin is set to True, which means trial displacements will be applied to the basin!"
+                logstr = "the TrialDisps2Basin is set to True, which means trial displacements will be applied to the basin!"
                 logstr += "\n" + f"Trial displacements: {disps} strains: {strains}!"
                 logstr += "\n" + f"Maximum displacement: {Max_Disp} Maximum strain: {Max_Strain}!"
                 logstr += "\n" + f"Target strain rate: {Target_StrainRate}, the max timestep: {Max_timestep}!."
@@ -941,7 +941,7 @@ class Settings:
 
         if self.dynamic_matrix["OutDynMat"]:
             if not self.dynamic_matrix["CalPrefactor"]:
-                errormsg = f"To output dynamic matrix, 'CalPrefactor' has to be True!"
+                errormsg = "To output dynamic matrix, 'CalPrefactor' has to be True!"
                 error_exit(errormsg)
 
         if self.saddle_point["CalBarrsInData"] and self.saddle_point["CalEbiasInData"]:
@@ -999,7 +999,7 @@ class Settings:
 
         if self.saddle_point["BarrierCut"] > 10.0:
             if mpi.rank == 0:
-                logstr = f"Warning: The BarrierCut in saddle_point is larger than 10 eV!"
+                logstr = "Warning: The BarrierCut in saddle_point is larger than 10 eV!"
                 logstr += "\n" + "This vibrational rate may be considered as 0.0 in code."
                 logstr += ("\n" +
                            "The probability distribution in KMC CANNOT differ"
@@ -1034,7 +1034,7 @@ class Settings:
                                         axis = -1
                                         errormsg += "\n" + "The axis index in FixAxesStr must be 0, 1 or 2."
                                         isValid = False
-                                except:
+                                except Exception:
                                     axis = -1
                                     errormsg += ("\n" +
                                                  "FixAxesStr must be a string with axis index "

@@ -6,7 +6,6 @@ import numpy as np
 from monty.io import zopen
 
 from seakmc.core.data import SeakmcData
-from seakmc.input.Input import export_Keys
 from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
@@ -89,7 +88,7 @@ class LammpsRunner(object):
         except subprocess.CalledProcessError as e:
             if rank_local == 0:
                 isValid = False
-                errormsg = f"Error on running LAMMPS!"
+                errormsg = "Error on running LAMMPS!"
                 errormsg += ("\n" +
                              f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
 
@@ -101,7 +100,7 @@ class LammpsRunner(object):
 
                 if total_energy == 0:
                     isValid = False
-                    errormsg = f"Error on getting energy in LAMMPS!"
+                    errormsg = "Error on getting energy in LAMMPS!"
                     errormsg += ("\n" +
                                  f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
 
@@ -110,7 +109,7 @@ class LammpsRunner(object):
                     relaxed_coords = self.get_relaxed_coords(data)
                     if len(relaxed_coords) == 0:
                         isValid = False
-                        errormsg = f"Error on getting coordinates in LAMMPS!"
+                        errormsg = "Error on getting coordinates in LAMMPS!"
                         errormsg += ("\n" +
                                      f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
                 else:
@@ -175,7 +174,7 @@ class LammpsRunner(object):
                 total_energy = self.get_total_energy()
                 if total_energy == 0:
                     isValid = False
-                    errormsg = f"Error on getting energy in LAMMPS!"
+                    errormsg = "Error on getting energy in LAMMPS!"
                     errormsg += ("\n" +
                                  f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
         else:
@@ -231,14 +230,14 @@ class LammpsRunner(object):
                 total_energy = self.get_total_energy()
                 if total_energy == 0:
                     isValid = False
-                    errormsg = f"Error on getting energy in LAMMPS!"
+                    errormsg = "Error on getting energy in LAMMPS!"
                     errormsg += ("\n" +
                                  f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
             if isValid:
                 forces = self.get_forces(data)
                 if len(forces) == 0:
                     isValid = False
-                    errormsg = f"Error on getting forces in LAMMPS!"
+                    errormsg = "Error on getting forces in LAMMPS!"
                     errormsg += ("\n" +
                                  f"Job - purpose:{purpose} datatype:{type(data)} thiscolor:{thiscolor} nactive:{nactive}!")
         else:
@@ -259,7 +258,7 @@ class LammpsRunner(object):
         if nactive is None:
             try:
                 nactive = data.nactive
-            except:
+            except Exception:
                 nactive = data.natoms
         if purpose == "DATAMD":
             if isinstance(self.sett.data["RinputMD"], str):
@@ -501,7 +500,7 @@ class LammpsRunner(object):
             etotals = list(filter(None, list(map(lambda strings: strings.strip(), etotal.split(" ")))))
             try:
                 etotal = float(etotals[0])
-            except:
+            except Exception:
                 etotal = 0.0
             return etotal
         else:

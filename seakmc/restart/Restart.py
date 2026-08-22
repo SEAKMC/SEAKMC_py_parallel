@@ -1,7 +1,6 @@
 import os
 import pickle
 
-from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
@@ -52,7 +51,7 @@ class RESTART:
             with open(filename, 'rb') as f:
                 try:
                     thisRestart = pickle.load(f)
-                except:
+                except Exception:
                     errormsg = "Cannot load restart file!"
                     error_exit(errormsg)
         else:

@@ -14,7 +14,7 @@ def data_dynamics(purpose, force_evaluator, data, ntask_tot, nactive=None, nproc
     if nactive is None:
         try:
             nactive = data.nactive
-        except:
+        except Exception:
             nactive = data.natoms
 
     ntask_left = ntask_tot

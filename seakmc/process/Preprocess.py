@@ -30,7 +30,7 @@ def load_RESTART(Restartsett):
                         istep_this = int(thisstrs[0])
                         finished_AVs = int(thisstrs[1])
                         files.append((istep_this, finished_AVs))
-                    except:
+                    except Exception:
                         pass
             if len(files) > 0:
                 fsorted = sorted(files, key=lambda t: (t[0], t[1]), reverse=True)

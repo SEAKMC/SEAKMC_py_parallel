@@ -5,7 +5,6 @@ from monty.io import zopen
 
 from seakmc.input.Input import export_Keys
 from seakmc.input.Input import SP_COMPACT_HEADER, SP_COMPACT_HEADER4Delete
-from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"

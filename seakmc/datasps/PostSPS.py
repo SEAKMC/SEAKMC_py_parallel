@@ -1,5 +1,4 @@
 
-from seakmc.mpiconf.context import mpi
 
 import seakmc.datasps.PreSPS as preSPS
 from seakmc.spsearch.SaddlePoints import DefectBank

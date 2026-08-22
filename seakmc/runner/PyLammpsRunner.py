@@ -4,7 +4,6 @@ import os
 import numpy as np
 from monty.io import zopen
 
-from seakmc.input.Input import export_Keys
 from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
@@ -182,7 +181,7 @@ class PyLammpsRunner(object):
         if nactive is None:
             try:
                 nactive = data.nactive
-            except:
+            except Exception:
                 nactive = data.natoms
         if purpose == "DATAMD":
             if isinstance(self.sett.data["RinputMD"], str):
@@ -475,5 +474,5 @@ class PyLammpsRunner(object):
     def close(self):
         try:
             self.bin.close()
-        except:
+        except Exception:
             pass

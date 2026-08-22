@@ -51,7 +51,7 @@ def get_sel_SPs_for_out(Vsett, thiskmc, DataSPs):
             for i in Vsett["Write_Data_SPs"]["Sel_iSPs"]:
                 try:
                     sel_SPs.append(i)
-                except:
+                except Exception:
                     pass
         elif Vsett["Write_Data_SPs"]["Sel_iSPs"].upper() == "ALL":
             sel_SPs = np.arange(DataSPs.nSP, dtype=int)

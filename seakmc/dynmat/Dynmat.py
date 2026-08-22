@@ -2,7 +2,6 @@ import numpy as np
 import copy
 import scipy.linalg
 
-from seakmc.mpiconf.context import mpi
 from seakmc.mpiconf.error_exit import error_exit
 
 __author__ = "Tao Liang"
