@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=67.7.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seakmc"
+version = "2.1.0"
+description = "Self-Evolving Atomistic Kinetic Monte Carlo (SEAKMC) for long-timescale atomistic simulation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "BSD-3-Clause" }
+authors = [
+    { name = "Haixuan Xu", email = "xhx@utk.edu" },
+    { name = "Tao Liang", email = "xhtliang120@gmail.com" },
+]
+maintainers = [
+    { name = "Haixuan Xu", email = "xhx@utk.edu" },
+    { name = "Tao Liang", email = "xhtliang120@gmail.com" },
+]
+keywords = [
+    "kinetic-monte-carlo",
+    "kmc",
+    "saddle-point-search",
+    "dimer-method",
+    "atomistic-simulation",
+    "materials-science",
+    "molecular-dynamics",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = [
+    "numpy>=1.26.0",
+    "scipy>=1.10.1",
+    "pandas>=2.0.1",
+    # Verified against 3.1.6 and 4.1.2. The former <=3.1.6 cap predated 4.0 and
+    # blocked Python 3.13, for which 3.1.6 ships no wheel; every MPI call this
+    # package makes is core API unchanged across 3.x and 4.x.
+    "mpi4py>=3.1.0",
+    "monty>=2023.4.10",
+    "pymatgen>=2023.11.12",
+    "pyyaml>=6.0",
+]
+
+# SEAKMC does not provide an energy/force evaluator -- install one separately.
+# The LAMMPS Python module is normally built alongside LAMMPS as a shared
+# library; the PyPI "lammps" distribution is an unofficial third-party build and
+# is offered here only as a convenience.
+[project.optional-dependencies]
+lammps = ["lammps>=2023.03.28"]
+all = ["seakmc[lammps]"]
+
+[project.scripts]
+seakmc = "seakmc.cli:main"
+# Retained so existing job scripts invoking `seakmc_p` keep working.
+seakmc_p = "seakmc.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/SEAKMC/SEAKMC_py_parallel"
+Repository = "https://github.com/SEAKMC/SEAKMC_py_parallel"
+Issues = "https://github.com/SEAKMC/SEAKMC_py_parallel/issues"
+Manual = "https://github.com/SEAKMC/SEAKMC_py_parallel/blob/main/SEAKMC_MANUAL.pdf"
+
+[tool.setuptools.packages.find]
+include = ["seakmc*"]  # matches both seakmc* and the seakmc_p* compat shim
+exclude = ["tests*", "docs*", "examples*", "run_script*"]

@@ -1,5 +1,5 @@
 system:
-    Inteval4ShowProgress: 10
+    Interval4ShowProgress: 10
     Restart:
         LoadRestart: True
         LoadFile: False
