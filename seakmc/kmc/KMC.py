@@ -1,6 +1,8 @@
 import copy
 
 import numpy as np
+
+from seakmc.core.rng import random_source, NS_KMC_SELECT, NS_KMC_TIME, NS_BASIN_TIME
 import pandas as pd
 import scipy.linalg
 
@@ -76,7 +78,7 @@ class Basin:
             self.localiav = np.take_along_axis(self.localiav, inds, axis=0)
             self.localisp = np.take_along_axis(self.localisp, inds, axis=0)
 
-        rnd = np.random.rand(1)
+        rnd = random_source.stream(NS_BASIN_TIME, self.istep, self.id).random(1)
         self.timeelapse = -np.log(rnd[0]) * self.sumfreq
         self.one_over_freq = 1.0 / self.sumfreq
         self.equi_barr = -np.log(self.sumfreq / self.meanpref) * KB * self.temp
@@ -402,7 +404,7 @@ class DataKMC:
         self.isps = np.arange(self.nSP, dtype=int)
 
     def get_timestep(self, thisSuperBasin):
-        rnd = np.random.rand(1)
+        rnd = random_source.stream(NS_KMC_TIME, self.id, self.iter).random(1)
         if self.sett["Temp"] == self.sett["Temp4Time"]:
             thistime = -np.log(rnd[0]) * thisSuperBasin.sumtime
             thisoneoverfreq = 1.0 * thisSuperBasin.sumtime
@@ -437,7 +439,7 @@ class DataKMC:
 
     def select_event(self, thisSuperBasin):
         self.get_probs(thisSuperBasin)
-        rnd = np.random.rand(1)
+        rnd = random_source.stream(NS_KMC_SELECT, self.id, self.iter).random(1)
         sel = np.where(self.probs < rnd[0])
         if rnd[0] == 0.0:
             isel = 0

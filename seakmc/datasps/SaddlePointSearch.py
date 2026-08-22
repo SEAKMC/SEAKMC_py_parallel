@@ -2,6 +2,8 @@ import time
 
 import numpy as np
 
+from seakmc.core.rng import random_source, NS_VN
+
 from seakmc.core.data import ActiveVolumeSPS
 from seakmc.core.util import mats_angle
 from seakmc.spsearch.SPSearch import Dimer
@@ -15,17 +17,24 @@ __email__ = "xhtliang120@gmail.com"
 __date__ = "October 7th, 2021"
 
 
-def generate_VN(spsearchsett, thisVNS, nactive, SNC=False, dmAV=None):
+def generate_VN(spsearchsett, thisVNS, nactive, SNC=False, dmAV=None, rng=None):
+    """Propose an initial dimer direction.
+
+    ``rng`` is a task-keyed generator; passing None falls back to the global
+    NumPy state and makes the run irreproducible.
+    """
+    if rng is None:
+        rng = np.random
     isvalid = False
     thisiter = 0
     while not isvalid:
         if SNC:
-            VN = np.random.rand(3 * nactive) - 0.5
-            isel = np.random.randint(0, high=3 * nactive)
+            VN = rng.random(3 * nactive) - 0.5
+            isel = int(rng.integers(0, 3 * nactive))
             VN += dmAV.eigvec.T[isel]
             VN = VN.reshape([3, nactive])
         else:
-            VN = np.random.rand(3, nactive) - 0.5
+            VN = rng.random((3, nactive)) - 0.5
         if spsearchsett["HandleVN"]["CheckAng4Init"]:
             anglemin = 180.0
             for i in range(len(thisVNS)):
@@ -51,7 +60,8 @@ def spsearch_search_single(nproc_task, thiscolor, comm_split,
 
     thisAVd = ActiveVolumeSPS.from_activevolume(idsps, thisAV)
     if comm_split.Get_rank() == 0:
-        thisVN = generate_VN(thissett.spsearch, thisVNS, thisAVd.nactive, SNC=SNC, dmAV=dynmatAV)
+        thisVN = generate_VN(thissett.spsearch, thisVNS, thisAVd.nactive, SNC=SNC, dmAV=dynmatAV,
+                             rng=random_source.stream(NS_VN, istep, idav, idsps))
     else:
         thisVN = None
     if comm_split.Get_size() > 1: thisVN = comm_split.bcast(thisVN, root=0)

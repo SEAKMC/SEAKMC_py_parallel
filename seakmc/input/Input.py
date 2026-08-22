@@ -190,7 +190,7 @@ class Settings:
 
         Restart = {"LoadRestart": True, "LoadFile": None, "WriteRestart": True,
                    "AVStep4Restart": 1000, "KMCStep4Restart": 1, "Reset_Simulation_Time": False}
-        thissystem = {"TempFiles": TempFiles, "Interval4ShowProgress": 10,
+        thissystem = {"TempFiles": TempFiles, "Interval4ShowProgress": 10, "RandomSeed": None,
                       "significant_figures": 6, "float_precision": 3, "VerySmallNumber": 1.0e-20,
                       "angle_tolerance": 5.0, "Tolerance": 0.1,
                       "Restart": Restart}

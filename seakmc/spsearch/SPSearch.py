@@ -5,6 +5,8 @@ import warnings
 
 import shutil
 import numpy as np
+
+from seakmc.core.rng import random_source, NS_VN
 import pandas as pd
 import scipy.linalg
 from numpy import pi
@@ -259,13 +261,16 @@ class SPSearch:
         return np.argsort(thisx)
 
     def generate_VN(self):
+        # Same task identity as the caller-supplied direction: this path runs
+        # only when no VN was passed in, so the two never collide.
+        rng = random_source.stream(NS_VN, self.ikmc, self.idav, self.idsps)
         if self.SNC:
-            VN = np.random.rand(3 * self.nactive) - 0.5
-            isel = np.random.randint(3, high=3 * self.nactive)
+            VN = rng.random(3 * self.nactive) - 0.5
+            isel = int(rng.integers(3, 3 * self.nactive))
             VN += self.dmAV.eigvec.T[isel]
             VN = VN.reshape([3, self.nactive])
         else:
-            VN = np.random.rand(3, self.nactive) - 0.5
+            VN = rng.random((3, self.nactive)) - 0.5
         return VN
 
     def Check_Angle(self, thisSPS):

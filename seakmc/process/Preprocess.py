@@ -7,6 +7,8 @@ from seakmc.core.data import SeakmcData
 from seakmc.restart.Restart import RESTART
 import seakmc.mpiconf.MPIconf as mympi
 from seakmc.mpiconf.error_exit import error_exit
+from seakmc.core.rng import random_source
+from seakmc.general.manifest import write_manifest
 from seakmc.mpiconf.context import mpi
 
 def load_RESTART(Restartsett):
@@ -123,6 +125,20 @@ def preprocess(thissett):
     comm_world = mpi.comm
     rank_world = comm_world.Get_rank()
     size_world = comm_world.Get_size()
+
+    # Every rank must share one master seed, or the task-keyed streams would
+    # disagree about what a given (step, volume, search) should draw. Rank 0
+    # decides -- generating one if the input left it unset -- and broadcasts.
+    seed = thissett.system.get("RandomSeed")
+    if rank_world == 0:
+        seed = random_source.seed(seed)
+    seed = comm_world.bcast(seed, root=0)
+    random_source.seed(seed)
+    thissett.system["RandomSeed"] = seed
+    if rank_world == 0:
+        write_manifest(os.path.join(os.getcwd(), "Seakmc_manifest.json"),
+                       thissett, seed, size_world)
+
     Eground = 0.0
     thisRestart = load_RESTART(thissett.system["Restart"])
     if rank_world == 0:
