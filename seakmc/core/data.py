@@ -95,6 +95,26 @@ class SeakmcBox(LammpsBox, MSONable):
         return self.get_string(significant_figures=significant_figures)
 
 
+def _sort_defects_canonically(defect_list, dCN_list):
+    """Order defects by global atom index, independent of MPI decomposition.
+
+    Falls back to the input order if the records carry no usable index, so a
+    change in the record dtype degrades to today's behaviour rather than
+    raising inside defect identification.
+    """
+    n = len(defect_list)
+    if n < 2 or len(dCN_list) != n:
+        return defect_list, dCN_list
+    try:
+        keys = [int(rec["index"]) for rec in defect_list]
+    except (KeyError, IndexError, TypeError, ValueError):
+        return defect_list, dCN_list
+    order = sorted(range(n), key=lambda i: keys[i])
+    if order == list(range(n)):
+        return defect_list, dCN_list
+    return [defect_list[i] for i in order], [dCN_list[i] for i in order]
+
+
 class SeakmcData(LammpsData, MSONable):
     def __init__(
             self,
@@ -748,6 +768,14 @@ class SeakmcData(LammpsData, MSONable):
 
             defect_list = mpi.comm.allreduce(defect_list)
             dCN_list = mpi.comm.allreduce(dCN_list)
+            # allreduce concatenates the per-rank lists in rank order, and the
+            # partition boundaries come from mpi.size -- so the same defects
+            # came back in a different global order at a different rank count,
+            # and idav (assigned from this order) named a different physical
+            # defect. Sorting on the global atom index makes the ordering a
+            # property of the structure rather than of the job geometry, which
+            # is what task-keyed RNG streams need to be anchored to.
+            defect_list, dCN_list = _sort_defects_canonically(defect_list, dCN_list)
         return defect_list, dCN_list
 
     def WS_find_defects(self):

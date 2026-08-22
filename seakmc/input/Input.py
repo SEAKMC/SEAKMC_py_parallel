@@ -183,8 +183,20 @@ class Settings:
 
     @classmethod
     def from_file(cls, filename):
+        # Key registry for validation: the set each defaults dict establishes,
+        # snapshotted BEFORE user values are merged in. Comparing against the
+        # merged settings cannot work -- the parser copies unknown keys in, so
+        # a misspelled key would look like a known one.
+        _default_keys = {}
+
         with open(filename, 'r') as f:
             parameters = yaml.safe_load(f)
+        if not isinstance(parameters, dict):
+            error_exit(f"{filename} did not parse to a mapping of sections.")
+        missing = [s for s in ("data", "potential", "kinetic_MC", "active_volume",
+                               "spsearch", "saddle_point") if s not in parameters]
+        if missing:
+            error_exit("Missing required input section(s): " + ", ".join(missing) + ".")
 
         TempFiles = ["tmp0.dat", "tmp1.dat", "tmp2.dat"]
 
@@ -194,6 +206,7 @@ class Settings:
                       "significant_figures": 6, "float_precision": 3, "VerySmallNumber": 1.0e-20,
                       "angle_tolerance": 5.0, "Tolerance": 0.1,
                       "Restart": Restart}
+        _default_keys["system"] = set(thissystem)
 
         if "system" in parameters:
             tsystem = parameters["system"]
@@ -210,6 +223,7 @@ class Settings:
         thisdata = {"units": "metal", "dimension": 3, "boundary": "p p p",
                     "Relaxed": True, "BoxRelax": False, "MoleDyn": False,
                     "RinputOpt": False, "RinputMD": False, "RinputMD0": False}
+        _default_keys["data"] = set(thisdata)
         data = parameters['data']
         if "FileName" not in data:
             raise ValueError("There must be a FileName for data!")
@@ -245,6 +259,7 @@ class Settings:
                      "ImportValue4RinputOpt": False, "Keys4ImportValue4RinputOpt": [["Timestep", "time_step"]],
                      "OutFileHeaders": [], "Relaxation": Relaxation, "TrialDisps2Basin": TrialDisps2Basin,
                      "GPU": None}
+        _default_keys["force_evaluator"] = set(thisfeval)
 
         if "force_evaluator" in parameters:
             force_evaluator = parameters["force_evaluator"]
@@ -538,6 +553,7 @@ class Settings:
                   "SortingShift": [0.0, 0.0, 0.0],
                   "SortingBuffer": False, "SortingFixed": False,
                   "PBC": [False, False, False], "NMin_perproc": 5}
+        _default_keys["active_volume"] = set(thisav)
 
         active_volume = parameters['active_volume']
         if "Style" not in active_volume: active_volume["Style"] = "defects"
@@ -689,6 +705,7 @@ class Settings:
                         "ApplyMass": False, "TaskDist": "AV", "Master_Slave": True,
                         "LocalRelax": LocalRelax, "force_evaluator": spsearch_force_evaluator, "Preloading": Preloading,
                         "HandleVN": HandleVN}
+        _default_keys["spsearch"] = set(thisspsearch)
 
         spsearch = parameters['spsearch']
         for key in spsearch:
@@ -715,6 +732,7 @@ class Settings:
         thisKMC = {"NSteps": 1, "Temp": 800.0, "Temp4Time": 800.0, "AccStyle": "NoAcc", "NMaxBasin": "NA",
                    "Tol4Disp": 0.1, "Tol4Barr": 0.03,
                    "EnCut4Transient": 0.5, "Handle_no_Backward": "Out", "DispStyle": "FI", "Sorting": False}
+        _default_keys["kinetic_MC"] = set(thisKMC)
         if "kinetic_MC" in parameters:
             KMC = parameters['kinetic_MC']
             for key in KMC:
@@ -728,6 +746,7 @@ class Settings:
         thisDynMat = {"SNC": False, "NMax4SNC": 1000, "displacement": 0.000001,
                       "delimiter": " ", "LowerHalfMat": False, "OutDynMat": False,
                       "CalPrefactor": False, "Method4Prefactor": "harmonic", "VibCut": 1.0e-8}
+        _default_keys["dynamic_matrix"] = set(thisDynMat)
         if "dynamic_matrix" in parameters:
             DynMat = parameters['dynamic_matrix']
             for key in DynMat:
@@ -738,6 +757,7 @@ class Settings:
                           "FileHeader": "DB", "LoadDB": False, "LoadPath": "DefectBank", "SortDisps": False,
                           "Recycle": False, "UseSymm": False, "SaveDB": False, "SavePath": "DefectBank",
                           "OutIndex": True}
+        _default_keys["defect_bank"] = set(thisDefectBank)
         if "defect_bank" in parameters:
             DefectBank = parameters['defect_bank']
             for key in DefectBank:
@@ -770,6 +790,7 @@ class Settings:
                   "DsumCut_FS": "NA", "DsumMin_FS": 0.0, "DsumrCut_FS": "NA", "DsumrMin_FS": 0.0,
                   "Prefactor": 10.0, "CalBarrsInData": False, "CalEbiasInData": False, "Thres4Recalib": None,
                   "ValidSPs": ValidSPs}
+        _default_keys["saddle_point"] = set(thissp)
 
         saddlepoint = parameters["saddle_point"]
         for key in saddlepoint:
@@ -832,6 +853,7 @@ class Settings:
                       "RCut4Vis": 0.04, "DCut4Vis": 0.01, "Invisible": True, "Reset_Index": False, "ShowBuffer": False,
                       "ShowFixed": False,
                       "Write_Data_SPs": Write_Data_SPs, "Write_AV_SPs": Write_AV_SPs}
+        _default_keys["visual"] = set(thisvisual)
 
         if "visual" in parameters:
             visual = parameters['visual']
@@ -867,10 +889,23 @@ class Settings:
         if not isinstance(thisvisual["LogFile"], str): thisvisual["LogFile"] = "Seakmc.log"
         thissett = cls(thissystem, thisfeval, potential, thisdata, thisKMC, thisav, thisDefectBank, thisDynMat,
                        thisspsearch, thissp, thisvisual)
+        # Keep the document as written so validate_input can report keys the
+        # parser never read -- the defaults dict alone cannot distinguish
+        # "absent" from "misspelled".
+        thissett._raw_parameters = parameters
+        thissett._default_keys = _default_keys
 
         return thissett
 
-    def validate_input(self):
+    def validate_input(self, strict=True):
+        # Structural checks first: unknown keys, unknown sections, and numeric
+        # settings holding non-numbers. Previously nothing checked these, so a
+        # misspelled key was silently ignored.
+        problems = []
+        raw = getattr(self, "_raw_parameters", None)
+        if raw is not None:
+            from seakmc.input.validate import validate
+            problems = validate(raw, self, strict=strict)
         if self.force_evaluator["Style"].upper() == "VASP":
             if mpi.rank == 0:
                 logstr = f"The binary file for VASP style is 'callvasp', which is a submission script!"
@@ -1029,6 +1064,8 @@ class Settings:
             FixTypes_dict = None
 
         self.spsearch["FixTypes_dict"] = FixTypes_dict
+
+        return problems
 
     def reset_settings(self, key, value):
         if key == 'system':

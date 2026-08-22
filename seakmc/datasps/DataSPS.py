@@ -22,6 +22,61 @@ __date__ = "October 7th, 2021"
 
 
 
+def process_finished_SP(thissett, thisSPS, thisSP, local_coords, thisSOPs, df_delete_SPs, DFWriter):
+    """Run one arrived saddle point through the reduction pipeline:
+    duplicate check, optional realtime validation, symmetry expansion,
+    insertion. Extracted verbatim from the three collection loops."""
+    if thisSP.ISVALID:
+        isDup, df_delete_this = thisSPS.check_this_duplicate(thisSP)
+        if isDup:
+            df_delete_SPs = preSPS.update_df_delete_SPs(df_delete_SPs, df_delete_this, DFWriter)
+            thisSP.ISVALID = False
+        else:
+            if thissett.saddle_point["ValidSPs"]["RealtimeDelete"]:
+                df_delete_this, delete_this = thisSPS.realtime_validate_thisSP(thisSP)
+                if delete_this:
+                    df_delete_SPs = preSPS.update_df_delete_SPs(df_delete_SPs, df_delete_this, DFWriter)
+                    thisSP.ISVALID = False
+        if thisSP.ISVALID:
+            if thisSOPs.nOP > 1:
+                thisSymmsps = thisSP.get_SPs_from_symmetry(local_coords, thisSOPs)
+                thisSPS.insert_SP([thisSP] + thisSymmsps)
+            else:
+                thisSPS.insert_SP(thisSP)
+            if thissett.saddle_point["ValidSPs"]["RealtimeValid"]:
+                thisSPS.validate_SPs(Delete=False)
+    return df_delete_SPs
+
+
+def reduce_AV_SPs(thissett, thisSPS, pending, local_coords, thisSOPs, df_delete_SPs, DFWriter,
+                  idav, float_precision):
+    """Reduce one active volume's completed searches in canonical idsps order.
+
+    Arrival order at np>1 follows Master_Slave completion order, which varies
+    with machine load, and duplicate detection keeps the first arrival -- so
+    processing on arrival made the surviving saddle-point set depend on rank
+    count and timing even after the RNG streams were task-keyed (measured: 6
+    surviving SPs at np=1 vs 5 at np=2 for the same seed, identical barriers).
+    Buffering arrivals and reducing in ascending idsps makes the reduction
+    order -- and therefore the catalog -- a function of the task list alone.
+    """
+    logstr = ""
+    for idsps, thisSP, time_spsearch, ntsiter in sorted(pending, key=lambda t: t[0]):
+        if thisSP is None:
+            continue
+        df_delete_SPs = process_finished_SP(thissett, thisSPS, thisSP, local_coords, thisSOPs,
+                                            df_delete_SPs, DFWriter)
+        logstr += "\n" + (f"idAV:{idav}, idsps:{idsps},  ntrans: {ntsiter},  "
+                          f"barrier:{round(thisSP.barrier, float_precision)},  "
+                          f"ebias: {round(thisSP.ebias, float_precision)}")
+        logstr += "\n" + (f"      dmag:{round(thisSP.dmag, float_precision)}, "
+                          f"dmagFin:{round(thisSP.fdmag, float_precision)}, isConnect: {thisSP.isconnect}")
+        logstr += "\n" + (f"      Valid SPs: {thisSPS.nvalid}, num of SPs:{thisSPS.nSP}, "
+                          f"time: {round(time_spsearch, float_precision)} s")
+        logstr += "\n" + "-----------------------------------------------------------------"
+    return df_delete_SPs, logstr
+
+
 def AV_is_done(idav, iav, idsps, ticav_l, thisAV_l, AVstring_l, thisSPS_l,
                Pre_Disps_l, isRecycled_l, isPGSYMM_l, thisSOPs_l, SNC_l, CalPref_l, thisVNS_l,
                DataSPs, AVitags, df_delete_SPs, undo_idavs, finished_AVs, simulation_time,
@@ -112,6 +167,12 @@ def master_data_SPS(ntask_tot, nproc_task, ntask_time,
     completed_tasks = 0
     completed_spsearchs_AV = np.zeros(navs, dtype=int)
     working_jobs = []
+    # Arrivals are buffered per AV and reduced in canonical idsps order once
+    # the AV completes; AVs are finalized in ascending iav order. Both are
+    # required for results to be independent of dispatch/completion order.
+    pending_SPs_l = [[] for _ in range(navs)]
+    av_ready = np.zeros(navs, dtype=bool)
+    next_finalize = 0
     while completed_tasks < ntask_tot:
         idtask = mpi.comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
         s = status.Get_source()
@@ -142,49 +203,25 @@ def master_data_SPS(ntask_tot, nproc_task, ntask_time,
                 if thisVN is not None:
                     if len(thisVN) > 0 and len(thisVNS_l[iav]) <= thissett.spsearch["HandleVN"]["NMaxRandVN"]:
                         thisVNS_l[iav].append(thisVN)
-                if thisSP is not None:
-                    if thisSP.ISVALID:
-                        isDup, df_delete_this = thisSPS_l[iav].check_this_duplicate(thisSP)
-                        if isDup:
-                            df_delete_SPs = preSPS.update_df_delete_SPs(df_delete_SPs, df_delete_this, DFWriter)
-                            thisSP.ISVALID = False
-                        else:
-                            if thissett.saddle_point["ValidSPs"]["RealtimeDelete"]:
-                                df_delete_this, delete_this = thisSPS_l[iav].realtime_validate_thisSP(thisSP)
-                                if delete_this:
-                                    df_delete_SPs = preSPS.update_df_delete_SPs(df_delete_SPs, df_delete_this, DFWriter)
-                                    thisSP.ISVALID = False
-                        if thisSP.ISVALID:
-                            if thisSOPs_l[iav].nOP > 1:
-                                thisSymmsps = thisSP.get_SPs_from_symmetry(
-                                    thisAV_l[iav].to_coords(Buffer=False, Fixed=False), thisSOPs_l[iav])
-                                thisSPS_l[iav].insert_SP([thisSP] + thisSymmsps)
-                            else:
-                                thisSPS_l[iav].insert_SP(thisSP)
-                            if thissett.saddle_point["ValidSPs"]["RealtimeValid"]: thisSPS_l[iav].validate_SPs(
-                                Delete=False)
-
-                AVstring_l[
-                    iav] += "\n" + (f"idAV:{idav}, idsps:{idsps},  ntrans: {ntsiter},  "
-                                    f"barrier:{round(thisSP.barrier, float_precision)},  "
-                                    f"ebias: {round(thisSP.ebias, float_precision)}")
-                AVstring_l[
-                    iav] += "\n" + (f"      dmag:{round(thisSP.dmag, float_precision)}, "
-                                    f"dmagFin:{round(thisSP.fdmag, float_precision)}, isConnect: {thisSP.isconnect}")
-                AVstring_l[
-                    iav] += "\n" + (f"      Valid SPs: {thisSPS_l[iav].nvalid}, num of SPs:{thisSPS_l[iav].nSP}, "
-                                    f"time: {round(time_spsearch, float_precision)} s")
-                AVstring_l[iav] += "\n" + "-----------------------------------------------------------------"
+                pending_SPs_l[iav].append((idsps, thisSP, time_spsearch, ntsiter))
 
                 isVisit[iav] = True
                 completed_spsearchs_AV[iav] += 1
                 if completed_spsearchs_AV[iav] == thisnspsearch:
-                    isAVDone = True
-                else:
-                    isAVDone = False
+                    av_ready[iav] = True
 
-                if isAVDone:
-                    DataSPs, AVitags, df_delete_SPs = AV_is_done(idav, iav, idsps, ticav_l, thisAV_l, AVstring_l,
+                while next_finalize < navs and av_ready[next_finalize]:
+                    fav = next_finalize
+                    fidav = this_idavs[fav]
+                    df_delete_SPs, sp_log = reduce_AV_SPs(
+                        thissett, thisSPS_l[fav], pending_SPs_l[fav],
+                        (thisAV_l[fav].to_coords(Buffer=False, Fixed=False)
+                         if thisAV_l[fav] is not None else None), thisSOPs_l[fav],
+                        df_delete_SPs, DFWriter, fidav, float_precision)
+                    AVstring_l[fav] += sp_log
+                    pending_SPs_l[fav] = []
+                    DataSPs, AVitags, df_delete_SPs = AV_is_done(fidav, fav, thisnspsearch - 1, ticav_l, thisAV_l,
+                                                                 AVstring_l,
                                                                  thisSPS_l,
                                                                  Pre_Disps_l, isRecycled_l, isPGSYMM_l, thisSOPs_l,
                                                                  SNC_l, CalPref_l, thisVNS_l,
@@ -193,9 +230,8 @@ def master_data_SPS(ntask_tot, nproc_task, ntask_time,
                                                                  istep, thissett, seakmcdata, DefectBank_list,
                                                                  thisSuperBasin, Eground,
                                                                  DFWriter, object_dict)
-                    completed_avs[iav] = True
-                else:
-                    pass
+                    completed_avs[fav] = True
+                    next_finalize += 1
 
                 working_jobs.remove(thiscolor)
                 if task_index < ntask_tot: completed_tasks += 1
@@ -525,6 +561,39 @@ def data_SPS_no_master_slave(nproc_task, start_proc, ntask_time, thiscolor, comm
     dynmatAV_l = [None] * navs
     ticav_l = [None] * navs
     completed_spsearchs_AV = np.zeros(navs, dtype=int)
+    # Same canonical reduction as the master/slave path: buffer arrivals,
+    # reduce each AV in idsps order, finalize AVs in ascending iav order.
+    pending_SPs_l = [[] for _ in range(navs)]
+    av_ready = np.zeros(navs, dtype=bool)
+    next_finalize = 0
+
+    def _finalize_ready():
+        nonlocal DataSPs, AVitags, df_delete_SPs, next_finalize
+        while next_finalize < navs and av_ready[next_finalize]:
+            fav = next_finalize
+            fidav = this_idavs[fav]
+            df_delete_SPs2, sp_log = reduce_AV_SPs(
+                thissett, thisSPS_l[fav], pending_SPs_l[fav],
+                local_coords_l[fav], thisSOPs_l[fav],
+                df_delete_SPs, DFWriter, fidav, float_precision)
+            df_delete_SPs = df_delete_SPs2
+            AVstring_l[fav] = (AVstring_head_l[fav] or "") + (AVstring_app_l[fav] or "") + sp_log
+            pending_SPs_l[fav] = []
+            DataSPs, AVitags, df_delete_SPs = AV_is_done(fidav, fav, thisnspsearch - 1, ticav_l, thisAV_l,
+                                                         AVstring_l, thisSPS_l,
+                                                         Pre_Disps_l, isRecycled_l, isPGSYMM_l, thisSOPs_l, SNC_l,
+                                                         CalPref_l, thisVNS_l,
+                                                         DataSPs, AVitags, df_delete_SPs, undo_idavs, finished_AVs,
+                                                         simulation_time,
+                                                         istep, thissett, seakmcdata, DefectBank_list,
+                                                         thisSuperBasin, Eground,
+                                                         DFWriter, object_dict)
+            local_coords_l[fav] = None
+            isDynmat_l[fav] = False
+            AVstring_head_l[fav] = None
+            AVstring_app_l[fav] = None
+            completed_avs[fav] = True
+            next_finalize += 1
     isDynmat_l = np.zeros(navs, dtype=bool)
     completed_avs = np.zeros(navs, dtype=bool)
 
@@ -696,55 +765,12 @@ def data_SPS_no_master_slave(nproc_task, start_proc, ntask_time, thiscolor, comm
                 if len(thisVN) > 0 and len(thisVNS_l[iav]) <= thissett.spsearch["HandleVN"]["NMaxRandVN"]:
                     thisVNS_l[iav].append(thisVN)
 
-            if thisSP is not None:
-                if thisSP.ISVALID:
-                    isDup, df_delete_this = thisSPS_l[iav].check_this_duplicate(thisSP)
-                    if isDup:
-                        df_delete_SPs = preSPS.update_df_delete_SPs(df_delete_SPs, df_delete_this, DFWriter)
-                        thisSP.ISVALID = False
-                    else:
-                        if thissett.saddle_point["ValidSPs"]["RealtimeDelete"]:
-                            df_delete_this, delete_this = thisSPS_l[iav].realtime_validate_thisSP(thisSP)
-                            if delete_this:
-                                df_delete_SPs = preSPS.update_df_delete_SPs(df_delete_SPs, df_delete_this, DFWriter)
-                                thisSP.ISVALID = False
-                    if thisSP.ISVALID:
-                        if thisSOPs_l[iav].nOP > 1:
-                            thisSymmsps = thisSP.get_SPs_from_symmetry(local_coords_l[iav], thisSOPs_l[iav])
-                            thisSPS_l[iav].insert_SP([thisSP] + thisSymmsps)
-                        else:
-                            thisSPS_l[iav].insert_SP(thisSP)
-                        if thissett.saddle_point["ValidSPs"]["RealtimeValid"]: thisSPS_l[iav].validate_SPs(Delete=False)
-
-                AVstring_app_l[
-                    iav] += "\n" + (f"idAV:{idav}, idsps:{idsps},  "
-                                    f"ntrans: {ntsiter},  barrier:{round(thisSP.barrier, float_precision)},  "
-                                    f"ebias: {round(thisSP.ebias, float_precision)}")
-                AVstring_app_l[
-                    iav] += "\n" + (f"      dmag:{round(thisSP.dmag, float_precision)}, "
-                                    f"dmagFin:{round(thisSP.fdmag, float_precision)}, isConnect: {thisSP.isconnect}")
-                AVstring_app_l[
-                    iav] += "\n" + (f"      Valid SPs: {thisSPS_l[iav].nvalid}, num of SPs:{thisSPS_l[iav].nSP}, "
-                                    f"time: {round(time_spsearch, float_precision)} s")
-                AVstring_app_l[iav] += "\n" + "-----------------------------------------------------------------"
+            pending_SPs_l[iav].append((idsps, thisSP, time_spsearch, ntsiter))
 
             completed_spsearchs_AV[iav] += 1
             if completed_spsearchs_AV[iav] == thisnspsearch:
-                AVstring_l[iav] = AVstring_head_l[iav] + AVstring_app_l[iav]
-                DataSPs, AVitags, df_delete_SPs = AV_is_done(idav, iav, idsps, ticav_l, thisAV_l, AVstring_l, thisSPS_l,
-                                                             Pre_Disps_l, isRecycled_l, isPGSYMM_l, thisSOPs_l, SNC_l,
-                                                             CalPref_l, thisVNS_l,
-                                                             DataSPs, AVitags, df_delete_SPs, undo_idavs, finished_AVs,
-                                                             simulation_time,
-                                                             istep, thissett, seakmcdata, DefectBank_list,
-                                                             thisSuperBasin, Eground,
-                                                             DFWriter, object_dict)
-
-                local_coords_l[iav] = None
-                isDynmat_l[iav] = False
-                AVstring_head_l[iav] = None
-                AVstring_app_l[iav] = None
-                completed_avs[iav] = True
+                av_ready[iav] = True
+            _finalize_ready()
 
             for i in range(1, ntask_time):
                 itag = i * 100
@@ -783,56 +809,12 @@ def data_SPS_no_master_slave(nproc_task, start_proc, ntask_time, thiscolor, comm
                 if thisVN is not None:
                     if len(thisVN) > 0 and len(thisVNS_l[iav]) <= thissett.spsearch["HandleVN"]["NMaxRandVN"]:
                         thisVNS_l[iav].append(thisVN)
-                if thisSP is not None:
-                    if thisSP.ISVALID:
-                        isDup, df_delete_this = thisSPS_l[iav].check_this_duplicate(thisSP)
-                        if isDup:
-                            df_delete_SPs = preSPS.update_df_delete_SPs(df_delete_SPs, df_delete_this, DFWriter)
-                            thisSP.ISVALID = False
-                        else:
-                            if thissett.saddle_point["ValidSPs"]["RealtimeDelete"]:
-                                df_delete_this, delete_this = thisSPS_l[iav].realtime_validate_thisSP(thisSP)
-                                if delete_this:
-                                    df_delete_SPs = preSPS.update_df_delete_SPs(df_delete_SPs, df_delete_this, DFWriter)
-                                    thisSP.ISVALID = False
-                        if thisSP.ISVALID:
-                            if thisSOPs_l[iav].nOP > 1:
-                                thisSymmsps = thisSP.get_SPs_from_symmetry(local_coords_l[iav], thisSOPs_l[iav])
-                                thisSPS_l[iav].insert_SP([thisSP] + thisSymmsps)
-                            else:
-                                thisSPS_l[iav].insert_SP(thisSP)
-                            if thissett.saddle_point["ValidSPs"]["RealtimeValid"]: thisSPS_l[iav].validate_SPs(
-                                Delete=False)
-
-                    AVstring_app_l[
-                        iav] += "\n" + (f"idAV:{idav}, idsps:{idsps},  ntrans: {ntsiter},  "
-                                        f"barrier:{round(thisSP.barrier, float_precision)},  "
-                                        f"ebias: {round(thisSP.ebias, float_precision)}")
-                    AVstring_app_l[
-                        iav] += "\n" + (f"      dmag:{round(thisSP.dmag, float_precision)}, "
-                                        f"dmagFin:{round(thisSP.fdmag, float_precision)}, isConnect: {thisSP.isconnect}")
-                    AVstring_app_l[
-                        iav] += "\n" + (f"      Valid SPs: {thisSPS_l[iav].nvalid}, num of SPs:{thisSPS_l[iav].nSP}, "
-                                        f"time: {round(time_spsearch, float_precision)} s")
-                    AVstring_app_l[iav] += "\n" + "-----------------------------------------------------------------"
+                pending_SPs_l[iav].append((idsps, thisSP, time_spsearch, ntsiter))
 
                 completed_spsearchs_AV[iav] += 1
                 if completed_spsearchs_AV[iav] == thisnspsearch:
-                    AVstring_l[iav] = AVstring_head_l[iav] + AVstring_app_l[iav]
-                    DataSPs, AVitags, df_delete_SPs = AV_is_done(idav, iav, idsps, ticav_l, thisAV_l, AVstring_l,
-                                                                 thisSPS_l,
-                                                                 Pre_Disps_l, isRecycled_l, isPGSYMM_l, thisSOPs_l,
-                                                                 SNC_l, CalPref_l, thisVNS_l,
-                                                                 DataSPs, AVitags, df_delete_SPs, undo_idavs,
-                                                                 finished_AVs, simulation_time,
-                                                                 istep, thissett, seakmcdata, DefectBank_list,
-                                                                 thisSuperBasin, Eground,
-                                                                 DFWriter, object_dict)
-                    local_coords_l[iav] = None
-                    isDynmat_l[iav] = False
-                    AVstring_head_l[iav] = None
-                    AVstring_app_l[iav] = None
-                    completed_avs[iav] = True
+                    av_ready[iav] = True
+                _finalize_ready()
         else:
             pass
 

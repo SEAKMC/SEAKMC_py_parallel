@@ -57,7 +57,28 @@ def run(inputf="input.yaml"):
     return simulation_time
 
 
-def main():
+def validate_only(inputf="input.yaml"):
+    """Parse and check an input file without running anything."""
+    from seakmc.input.Input import Settings
+    sett = Settings.from_file(inputf)
+    sett.validate_input()
+    print(f"{inputf}: valid")
+    return 0
+
+
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "validate":
+        target = argv[1] if len(argv) > 1 else "input.yaml"
+        try:
+            validate_only(target)
+        except SeakmcError as e:
+            print(f"\n{e}", file=sys.stderr, flush=True)
+            sys.exit(1)
+        except FileNotFoundError:
+            print(f"No such input file: {target}", file=sys.stderr, flush=True)
+            sys.exit(1)
+        return
     try:
         run()
     except SeakmcError as e:
