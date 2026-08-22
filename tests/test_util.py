@@ -98,3 +98,21 @@ def test_diffusion_coefficient_reaches_the_summary():
     for key in ("mean_squared_disp", "diffusion_coeff", "one_over_freq"):
         assert key in export_Keys, key
         assert f'thisExports["{key}"]' in src, f"{key} is declared in export_Keys but never exported"
+
+
+def test_box_angles_and_orthogonality():
+    """Regression: SeakmcBox.angles called mat_angles(m) with m undefined, so
+    both angles and is_orthogonal raised NameError on every access. Caught by
+    ruff F821, which now gates CI."""
+    from seakmc.core.data import SeakmcBox
+
+    cubic = SeakmcBox([[0, 28.55], [0, 28.55], [0, 28.55]])
+    assert cubic.angles == pytest.approx((90.0, 90.0, 90.0))
+    assert cubic.is_orthogonal
+    assert cubic.lengths == pytest.approx((28.55, 28.55, 28.55))
+
+    # xy tilt of 2 over a 10 Ang cell: gamma = acos(20 / (10*sqrt(104)))
+    tilted = SeakmcBox([[0, 10], [0, 10], [0, 10]], tilt=[2.0, 0.0, 0.0])
+    expected = np.degrees(np.arccos(20.0 / (10.0 * np.sqrt(104.0))))
+    assert tilted.angles[2] == pytest.approx(expected, abs=1e-6)
+    assert not tilted.is_orthogonal

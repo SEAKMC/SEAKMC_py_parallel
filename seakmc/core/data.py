@@ -63,7 +63,7 @@ class SeakmcBox(LammpsBox, MSONable):
 
     @property
     def angles(self) -> Tuple[float, float, float]:
-        return tuple(mat_angles(m).tolist())  # type: ignore
+        return tuple(mat_angles(self._matrix).tolist())  # type: ignore
 
     @property
     def is_orthogonal(self) -> bool:
