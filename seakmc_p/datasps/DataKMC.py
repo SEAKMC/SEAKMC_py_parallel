@@ -55,6 +55,7 @@ def run_KMC(istep, thisSuperBasin, seakmcdata, AVitags, DataSPs, thissett, simul
     thisExports["backward_barrier"] = backward_barrier
     thisExports["one_over_freq"] = thiskmc.one_over_freq
     thisExports["mean_squared_disp"] = thiskmc.mean_squared_disp
+    thisExports["diffusion_coeff"] = thiskmc.diffusion_coeff
     thisExports["time_step"] = time_step
     thisExports["simulation_time"] = simulation_time
 
